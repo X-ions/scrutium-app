@@ -1,10 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "installCommand": "composer install --no-dev --optimize-autoloader --no-interaction && npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.7.3",
-      "includeFiles": "{app,bootstrap,config,database,public,resources,routes,storage,vendor}/**"
+      "includeFiles": "{app,bootstrap,config,database,public,resources,routes,storage,vendor}/**",
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "routes": [
