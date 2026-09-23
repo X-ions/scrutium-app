@@ -9,9 +9,6 @@ ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
 try {
-    use Illuminate\Foundation\Application;
-    use Illuminate\Http\Request;
-
     define('LARAVEL_START', microtime(true));
 
     $tmp = '/tmp/scrutium';
@@ -79,15 +76,15 @@ try {
 
     require $autoload;
 
-    /** @var Application $app */
+    /** @var \Illuminate\Foundation\Application $app */
     $app = require_once __DIR__ . '/../bootstrap/app.php';
     $app->useStoragePath($tmp . '/storage');
-    $app->handleRequest(Request::capture());
+    $app->handleRequest(\Illuminate\Http\Request::capture());
 } catch (Throwable $e) {
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
     echo "SCRUTIUM BOOT ERROR\n\n";
-    echo get_class($e) . ": " . $e->getMessage() . "\n\n";
+    echo get_class($e) . ': ' . $e->getMessage() . "\n\n";
     echo $e->getFile() . ':' . $e->getLine() . "\n\n";
     echo $e->getTraceAsString();
 }
