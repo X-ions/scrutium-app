@@ -21,7 +21,7 @@
                                 Sign In
                             </h1>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
-                                Enter your email and password to sign in!
+                                Sign in to your Scrutium workspace.
                             </p>
                         </div>
                         <div>
@@ -146,10 +146,10 @@
                     <x-common.common-grid-shape/>
                     <div class="flex max-w-xs flex-col items-center">
                         <a href="/" class="mb-4 block">
-                            <img src="./images/logo/auth-logo.svg" alt="Logo" />
+                            <img src="/images/logo/logo.png" alt="Scrutium" class="h-12 w-auto max-w-[220px] object-contain brightness-0 invert" />
                         </a>
                         <p class="text-center text-gray-400 dark:text-white/60">
-                            Free and Open-Source Tailwind CSS Admin Dashboard Template
+                            Enterprise influencer campaign operations — briefing to proof of delivery.
                         </p>
                     </div>
                 </div>
