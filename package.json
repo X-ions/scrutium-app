@@ -28,7 +28,7 @@
         "jsvectormap": "^1.7.0",
         "prismjs": "^1.30.0",
         "swiper": "^14.2.0",
-        "temporal-polyfill": "^1.0.4"
+        "temporal-polyfill": "^1.0.5"
     },
     "version": "1.1.2"
 }
