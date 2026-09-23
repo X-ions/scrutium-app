@@ -6,13 +6,16 @@
   "outputDirectory": "public",
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.3",
-      "includeFiles": "{app,bootstrap,config,database,public,resources,routes,storage,vendor}/**",
-      "memory": 1024,
-      "maxDuration": 30
+      "runtime": "vercel-php@0.7.4",
+      "includeFiles": "{app,bootstrap,config,database,public,resources,routes,storage,vendor}/**"
+    },
+    "api/debug.php": {
+      "runtime": "vercel-php@0.7.4",
+      "includeFiles": "{app,bootstrap,config,database,public,resources,routes,storage,vendor}/**"
     }
   },
   "routes": [
+    { "src": "/debug", "dest": "/api/debug.php" },
     { "src": "/build/(.*)", "dest": "/public/build/$1" },
     { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
     { "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|map|webp))", "dest": "/public/$1" },
