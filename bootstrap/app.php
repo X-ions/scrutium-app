@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,5 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (Throwable $e, Request $request) {
+            return response(
+                "SCRUTIUM ERROR\n\n".
+                $e::class.': '.$e->getMessage()."\n".
+                $e->getFile().':'.$e->getLine()."\n\n".
+                $e->getTraceAsString(),
+                500,
+                ['Content-Type' => 'text/plain; charset=utf-8']
+            );
+        });
     })->create();
