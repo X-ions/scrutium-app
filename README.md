@@ -1,530 +1,168 @@
-# TailAdmin Laravel - Tailwind CSS Free Laravel Dashboard
+# Scrutium
 
-**TailAdmin Laravel** is a modern, production-ready admin dashboard template powered by **Laravel 12**, **Tailwind CSS v4**, **Alpine.js**, and a clean, modular architecture. TailAdmin is one of the most popular Tailwind CSS dashboard now also available for Larvael. It’s designed for building fast, scalable admin panels, CRM dashboards, SaaS backends, and any data-driven application where clarity and performance matter.
-![TailAdmin - Next.js Dashboard Preview](./tailadmin-laravel.png)
+**Enterprise influencer marketing intelligence platform.**
 
+Campaign management, deliverable verification, performance analytics, scoring engines, and API integrations — built for brands and agencies that need end-to-end accountability from contract to financial decision.
 
-## Quick Links
-
-* [✨ Get TailAdmin Laravel](https://tailadmin.com/laravel)
-* [📄 Documentation](https://tailadmin.com/docs)
-* [⬇️ Download](https://tailadmin.com/download)
-* [🌐 Live Demo](https://laravel-demo.tailadmin.com)
-
-Here’s a tighter, more search-friendly version that highlights value and avoids fluff while keeping your structure intact.
-
-## ✨ Key Features
-
-* 🚀 **Laravel 12 Core** - Built on the latest Laravel release with improved routing, security, and Blade templating
-* 🎨 **Tailwind CSS v4** - Utility-first styling for rapid, consistent UI development
-* ⚡ **Alpine.js Interactivity** - Lightweight reactivity without a heavy JavaScript framework
-* 📦 **Vite Build System** - Fast dev server, instant HMR, and optimized production builds
-* 📱 **Fully Responsive Layouts** - Smooth, mobile-first design that adapts across all screen sizes
-* 🌙 **Built-in Dark Mode** - Ready-to-use modern dark theme for better usability and aesthetics
-* 📊 **Advanced UI Components** - Charts, data tables, forms, calendars, modals, and reusable blocks for complex dashboards
-* 🎯 **Production-Ready Dashboard UI** - Clean, modern interface crafted for real apps, not placeholder demos
-
-### Other Versions
-
-- [Next.js Version](https://github.com/TailAdmin/free-nextjs-admin-dashboard)
-- [React.js Version](https://github.com/TailAdmin/free-react-tailwind-admin-dashboard)
-- [Vue.js Version](https://github.com/TailAdmin/vue-tailwind-admin-dashboard)
-- [Angular Version](https://github.com/TailAdmin/free-angular-tailwind-dashboard)
-- [Laravel Version](https://github.com/TailAdmin/tailadmin-laravel)
-
-## 📋 Requirements
-To set up TailAdmin Laravel, make sure your environment includes:
-
-* **PHP 8.2+**
-* **Composer** (PHP dependency manager)
-* **Node.js 18+** and **npm** (for compiling frontend assets)
-* **Database** - Works with SQLite (default), MySQL, or PostgreSQL
-
-### Tailwind CSS Laravel Dashboard
-
-TailAdmin delivers a refined Tailwind CSS Laravel Dashboard experience, combining Laravel’s robust backend with Tailwind’s flexible utility classes. The result is a clean, fast, and customizable dashboard that helps developers build modern admin interfaces without the usual front-end complexity. It’s ideal for teams looking for a Tailwind-powered Laravel starter that stays lightweight and easy to scale.
-
-### Laravel Admin Dashboard
-
-If you’re searching for a dependable Laravel Admin Dashboard template that’s easy to set up and ready for production, TailAdmin fits the job. It offers a polished UI, reusable components, optimized performance, and all the essentials needed to launch dashboards, CRM systems, and internal tools quickly. It gives developers a solid foundation, so projects move faster with fewer decisions to worry about.
-
-### Check Your Environment
-
-Verify your installations:
-
-```bash
-php -v
-composer -V
-node -v
-npm -v
-```
-
-## 🐳 Docker & Laravel Sail Setup (Official)
-
-TailAdmin Laravel includes pre-configured, official support for **Docker** powered by **Laravel Sail** (PHP 8.4, MySQL 8.0, Redis, and Mailpit).
-
-### Prerequisites
-Make sure [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running on your machine.
-
-### Quick Start with Docker & Sail
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/TailAdmin/tailadmin-laravel.git
-   cd tailadmin-laravel
-   ```
-
-2. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   ```
-   In your `.env` file, ensure container networking is set:
-   ```env
-   DB_HOST=mysql
-   DB_USERNAME=sail
-   DB_PASSWORD=password
-   REDIS_HOST=redis
-   ```
-
-3. **Install Composer dependencies (if PHP is not installed locally):**
-   ```bash
-   docker run --rm \
-       -u "$(id -u):$(id -g)" \
-       -v "$(pwd):/var/www/html" \
-       -w /var/www/html \
-       laravelsail/php84-composer:latest \
-       composer install --ignore-platform-reqs
-   ```
-   *(Or simply run `composer install` if you have PHP and Composer locally).*
-
-4. **Start Docker containers:**
-   ```bash
-   ./vendor/bin/sail up -d
-   ```
-
-5. **Generate application key & run migrations:**
-   ```bash
-   ./vendor/bin/sail artisan key:generate
-   ./vendor/bin/sail artisan migrate
-   ```
-
-6. **Install frontend dependencies & start Vite dev server:**
-   ```bash
-   ./vendor/bin/sail npm install
-   ./vendor/bin/sail npm run dev
-   ```
-
-7. **Access the application:**
-   - **TailAdmin Dashboard:** [http://localhost](http://localhost) (or [http://localhost:8000](http://localhost:8000) if `APP_PORT=8000`)
-   - **Vite Dev Server:** [http://localhost:5173](http://localhost:5173) (auto-proxied with HMR)
-   - **Mailpit Web UI:** [http://localhost:8025](http://localhost:8025)
-
-### Convenient Sail Shell Alias
-To avoid typing `./vendor/bin/sail` repeatedly, add an alias to your shell profile (`~/.zshrc` or `~/.bashrc`):
-```bash
-alias sail='[ -f sail ] && sh sail || sh vendor/bin/sail'
-```
-Now you can run:
-```bash
-sail up -d
-sail artisan migrate
-sail npm run dev
-sail down
-```
-
-### Container Networking & Vite Architecture
-- **Vite Dev Server (Port 5173)**: Pre-configured in `vite.config.js` with `server.host: "0.0.0.0"` and `server.hmr.host: "localhost"`. This ensures the host browser can access assets directly without `ERR_EMPTY_RESPONSE` connection errors.
-- **Volume File Watcher**: File polling (`usePolling: true`) is enabled in `vite.config.js` to guarantee instant hot reload when editing code on macOS, Windows, or Linux host filesystems.
-- **Container Database Host**: Inside the Docker bridge network, services communicate via container names. Set `DB_HOST=mysql` and `REDIS_HOST=redis` inside Docker.
-- **Tailwind CSS v4**: Seamlessly compiled inside containers via `@tailwindcss/vite` without legacy v3 config conflicts.
+> UI foundation is based on [TailAdmin Laravel](https://tailadmin.com/laravel) (Laravel 12 + Tailwind CSS v4 + Alpine.js). Product design, branding, and domain features are **Scrutium**.
 
 ---
 
-## 🚀 Quick Start Installation (Local / Native)
+## What Scrutium does
 
-### Step 1: Clone the Repository
+| Area | Capability |
+|------|------------|
+| **Overview** | Data lifecycle status, attainment performance, system integrity, efficiency leaders |
+| **Campaigns** | Campaign central, roster & assignments, create-campaign wizard, budget allocation |
+| **Influencers** | Influencer intelligence, pulse scoring, vetting pipeline, talent sourcing |
+| **Deliverables** | Accountability table, evidence upload, verification status, audit log |
+| **Content** | Real-time monitoring feed, provenance scores, engagement timeline |
+| **Performance** | ROI, CPE, EMV, CTR, target vs actual, cost efficiency by platform |
+| **Scoring** | Configurable metric weights, cohort logic, ML-ready scouter engine |
+| **Reports** | Versioned reports, freeze cutoffs, bulk export, system version registry |
+| **Alerts** | Issue tracking, subscriptions, compliance notifications |
+| **Integrations** | Platform health, API management, auto-verification |
+| **Settings** | Roles & permissions, tenant overview |
+
+---
+
+## Stack
+
+- **Backend:** Laravel 12, PHP 8.3+
+- **Frontend:** Blade, Tailwind CSS v4, Alpine.js, Vite
+- **Charts / maps:** ApexCharts and related dashboard components (from UI base)
+- **Deploy:** Vercel (serverless PHP via `vercel-php`) + optional Docker / Laravel Sail
+
+---
+
+## Requirements
+
+- PHP 8.3+
+- Composer
+- Node.js 18+ (22.x recommended) and npm
+- SQLite (default), MySQL, or PostgreSQL
 
 ```bash
-git clone https://github.com/TailAdmin/tailadmin-laravel.git
-cd tailadmin-laravel
+php -v && composer -V && node -v && npm -v
 ```
 
-### Step 2: Install PHP Dependencies
+---
+
+## Quick start (local)
 
 ```bash
+git clone https://github.com/scrutium-inc/scrutium-app.git
+cd scrutium-app
+
 composer install
-```
-
-This command will install all Laravel dependencies defined in `composer.json`.
-
-### Step 3: Install Node.js Dependencies
-
-```bash
 npm install
+
+cp .env.example .env
+php artisan key:generate
+
+# Optional: SQLite
+touch database/database.sqlite
+# Or configure MySQL/PostgreSQL in .env
+
+php artisan migrate
+npm run build   # or: npm run dev
+php artisan serve
 ```
 
-Or if you prefer yarn or pnpm:
+App: [http://localhost:8000](http://localhost:8000)
+
+### Dev all-in-one
 
 ```bash
-# Using yarn
-yarn install
-
-# Using pnpm
-pnpm install
+composer run dev
 ```
 
-### Step 4: Environment Configuration
+Starts Laravel, Vite HMR, queue worker, and log tail.
 
-Copy the example environment file:
+---
+
+## Docker / Laravel Sail
 
 ```bash
 cp .env.example .env
+# Set DB_HOST=mysql, REDIS_HOST=redis, DB_USERNAME=sail, DB_PASSWORD=password
+
+composer install   # or via laravelsail/php84-composer image
+./vendor/bin/sail up -d
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run dev
 ```
 
-**For Windows users:**
+---
 
-```bash
-copy .env.example .env
-```
+## Deploy (Vercel)
 
-**Or create it programmatically:**
+This repo includes `vercel.json` and `api/index.php` for **vercel-php**.
 
-```bash
-php -r "file_exists('.env') || copy('.env.example', '.env');"
-```
+1. Import the GitHub repo in Vercel.
+2. Framework Preset: **Other** · Output Directory: **`public`** · Node **22.x**.
+3. Set environment variables (Production):
 
-### Step 5: Generate Application Key
+| Variable | Example |
+|----------|---------|
+| `APP_NAME` | `Scrutium` |
+| `APP_ENV` | `production` |
+| `APP_KEY` | `base64:...` (from `php artisan key:generate --show`) |
+| `APP_DEBUG` | `false` |
+| `APP_URL` | `https://your-app.vercel.app` |
+| `LOG_CHANNEL` | `stderr` |
+| `SESSION_DRIVER` | `cookie` |
+| `CACHE_STORE` | `array` |
+| `QUEUE_CONNECTION` | `sync` |
+| `DB_CONNECTION` | `sqlite` |
 
-```bash
-php artisan key:generate
-```
+4. Redeploy after saving env vars.
 
-This creates a unique encryption key for your application.
+> Serverless note: writable paths use `/tmp`. For production data, plan a managed database (e.g. Neon, PlanetScale, RDS) instead of ephemeral SQLite.
 
-### Step 6: Configure Database
+---
 
-#### Option A: Using MySQL/PostgreSQL
-
-Update your `.env` file with your database credentials:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=tailadmin_db
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-```
-
-Create the database:
-
-```bash
-# MySQL
-mysql -u root -p -e "CREATE DATABASE tailadmin_db;"
-
-# PostgreSQL
-createdb tailadmin_db
-```
-
-Run migrations:
-
-```bash
-php artisan migrate
-```
-
-### Step 7: (Optional) Seed the Database
-
-If you want sample data:
-
-```bash
-php artisan db:seed
-```
-
-### Step 8: Storage Link
-
-Create a symbolic link for file storage:
-
-```bash
-php artisan storage:link
-```
-
-## 🏃 Running the Application
-
-### Development Mode (Recommended)
-
-The easiest way to start development is using the built-in script:
-
-```bash
-composer run dev
-```
-
-This single command starts:
-- ✅ Laravel development server (http://localhost:8000)
-- ✅ Vite dev server for hot module reloading
-- ✅ Queue worker for background jobs
-- ✅ Log monitoring
-
-**Access your application at:** [http://localhost:8000](http://localhost:8000)
-
-### Manual Development Setup
-
-If you prefer to run services individually in separate terminal windows:
-
-**Terminal 1 - Laravel Server:**
-```bash
-php artisan serve
-```
-
-**Terminal 2 - Frontend Assets:**
-```bash
-npm run dev
-```
-
-### Building for Production
-
-#### Build Frontend Assets
-
-```bash
-npm run build
-```
-
-#### Optimize Laravel
-
-```bash
-# Clear and cache configuration
-php artisan config:cache
-
-# Cache routes
-php artisan route:cache
-
-# Cache views
-php artisan view:cache
-
-# Optimize autoloader
-composer install --optimize-autoloader --no-dev
-```
-
-#### Production Environment
-
-Update your `.env` for production:
-
-```env
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://yourdomain.com
-```
-
-
-## 🧪 Testing
-
-Run the test suite using Pest:
-
-```bash
-composer run test
-```
-
-Or manually:
-
-```bash
-php artisan test
-```
-
-Run with coverage:
-
-```bash
-php artisan test --coverage
-```
-
-Run specific tests:
-
-```bash
-php artisan test --filter=ExampleTest
-```
-
-## 📜 Available Commands
-
-### Composer Scripts
-
-```bash
-# Start development environment
-composer run dev
-
-# Run tests
-composer run test
-
-# Code formatting (if configured)
-composer run format
-
-# Static analysis (if configured)
-composer run analyze
-```
-
-### NPM Scripts
-
-```bash
-# Start Vite dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Lint JavaScript/TypeScript
-npm run lint
-
-# Format code
-npm run format
-```
-
-### Artisan Commands
-
-```bash
-# Start development server
-php artisan serve
-
-# Run migrations
-php artisan migrate
-
-# Rollback migrations
-php artisan migrate:rollback
-
-# Fresh migrations with seeding
-php artisan migrate:fresh --seed
-
-# Generate application key
-php artisan key:generate
-
-# Clear all caches
-php artisan optimize:clear
-
-# Cache everything for production
-php artisan optimize
-
-# Create symbolic link for storage
-php artisan storage:link
-
-# Start queue worker
-php artisan queue:work
-
-# List all routes
-php artisan route:list
-
-# Create a new controller
-php artisan make:controller YourController
-
-# Create a new model
-php artisan make:model YourModel -m
-
-# Create a new migration
-php artisan make:migration create_your_table
-```
-
-## 📁 Project Structure
+## Project structure (high level)
 
 ```
-tailadmin-laravel/
-├── app/                    # Application logic
-│   ├── Http/              # Controllers, Middleware, Requests
-│   ├── Models/            # Eloquent models
-│   └── Providers/         # Service providers
-├── bootstrap/             # Framework bootstrap files
-├── config/                # Configuration files
-├── database/              # Migrations, seeders, factories
-│   ├── migrations/
-│   ├── seeders/
-│   └── factories/
-├── public/                # Public assets (entry point)
-│   ├── build/            # Compiled assets (generated)
-│   └── index.php         # Application entry point
-├── resources/             # Views and raw assets
-│   ├── css/              # Stylesheets (Tailwind)
-│   ├── js/               # JavaScript files (Alpine.js)
-│   └── views/            # Blade templates
-├── routes/                # Route definitions
-│   ├── web.php           # Web routes
-│   ├── api.php           # API routes
-│   └── console.php       # Console routes
-├── storage/               # Logs, cache, uploads
-│   ├── app/
-│   ├── framework/
-│   └── logs/
-├── tests/                 # Pest test files
-│   ├── Feature/
-│   └── Unit/
-├── docker-compose.yml     # Docker & Laravel Sail configuration
-├── .env.example           # Example environment file
-├── artisan                # Artisan CLI
-├── composer.json          # PHP dependencies
-├── package.json           # Node dependencies
-├── vite.config.js         # Vite configuration with container networking
-└── resources/css/app.css  # Tailwind CSS v4 configuration (@theme)
+scrutium-app/
+├── api/                 # Vercel PHP entry (index.php)
+├── app/                 # Controllers, models, middleware
+├── bootstrap/
+├── config/
+├── database/
+├── public/              # Web root + Vite build output
+├── resources/
+│   ├── css/             # Tailwind v4
+│   ├── js/
+│   └── views/           # Blade (dashboards, layout, components)
+├── routes/web.php
+├── vercel.json
+└── .github/workflows/   # CI/CD
 ```
 
-## 🐛 Troubleshooting
+---
 
-### Common Issues
+## Roadmap (from wireframes)
 
-#### "Class not found" errors
-```bash
-composer dump-autoload
-```
+1. Rebrand UI (logo, nav labels, colors) → **Scrutium**
+2. Overview dashboard (data lifecycle, attainment, system integrity)
+3. Campaign Central + create-campaign flow
+4. Influencer Intelligence + scoring
+5. Deliverable Accountability + verification
+6. Content Monitoring + performance analytics
+7. Reporting, alerts, integrations, roles & permissions
 
-#### Permission errors on storage/bootstrap/cache
-```bash
-chmod -R 775 storage bootstrap/cache
-```
-
-#### NPM build errors
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-#### Clear all caches
-```bash
-php artisan optimize:clear
-```
-
-#### Database connection errors
-- Check `.env` database credentials
-- Ensure database server is running
-- Verify database exists
-
-## 🔄 Update Log
-
-### [1.1.2] - 2026-09-02
-
-- **Dependency updates**: FullCalendar upgraded to v7 and ApexCharts / Swiper bumped to latest versions.
-- **RTL layout support**: Added right-to-left (RTL) direction support with automatic layout flipping and toggle.
-- **Language / RTL switcher**: Added switcher in user dropdown with persistent direction state in `localStorage`.
-- **Keyboard & dropdown improvements**: Enhanced dropdown behavior and click-outside handling.
-- **Tailwind CSS v4 optimizations**: Applied CSS logical properties across sidebar, tables, header, and components.
-
-
-### [2026-05-23]
-
-- Added **AI Settings** page to configure models, keys, and token limits.
-- Added **Maps** page with MapLibre GL, Leaflet, and iframe styles.
-- Added **Vector Maps** page powered by AmCharts 5 geodata (World & USA).
-- Added **Radar Charts** page with 3 unique formats.
-- Added **Radial Progress Charts** page featuring 4 custom layout templates.
-- Introduced new **Bar Charts Five & Six** and **Pie Charts Four & Five**.
-
-### [April 28, 2026]
-- Added **AI Dashboard** with token usage and revenue tracking.
-- Added **Sales Dashboard** with retention and multi-channel analytics.
-- Added **Finance Dashboard** with cashflow and balance management.
-- Introduced **6 New Layout variations** for improved UI flexibility.
-- Integrated **Advanced Data Visualization** with 7+ new chart types.
-
-### [2026-03-15]
-- Fixed PHP 8.5 deprecation warning
-
-### [2025-12-29]
-- Added Date Picker in Statistics Chart
+---
 
 ## License
 
-Refer to our [LICENSE](https://tailadmin.com/license) page for more information.
+Application code and Scrutium product work: **MIT** (see repository license).
+
+UI components derive from TailAdmin Laravel; respect [TailAdmin licensing](https://tailadmin.com/license) for the original template assets where applicable.
+
+---
+
+**Scrutium** — from contract to decision, with verification in between.
