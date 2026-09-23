@@ -1,0 +1,37 @@
+version: 2
+updates:
+  # GitHub Actions themselves
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+
+  # npm (enable when package.json exists at root or in subfolders)
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
+    # groups:
+    #   production:
+    #     dependency-type: production
+    #   development:
+    #     dependency-type: development
+
+  # Uncomment and adjust if you add Docker, Python, etc.
+  # - package-ecosystem: docker
+  #   directory: "/"
+  #   schedule:
+  #     interval: weekly
+  #
+  # - package-ecosystem: pip
+  #   directory: "/"
+  #   schedule:
+  #     interval: weekly

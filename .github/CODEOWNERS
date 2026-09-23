@@ -1,0 +1,6 @@
+# Default owners for everything in the repo
+# Replace with real GitHub usernames or teams when ready
+* @scrutiumresearch
+
+# Critical paths (CI/CD, security, infra)
+.github/ @scrutiumresearch
