@@ -31,13 +31,13 @@ foreach ($dirs as $dir) {
 
 // Always override: Vercel filesystem is read-only except /tmp.
 $forced = [
-    'APP_CONFIG_CACHE' => $tmp . '/config.php',
-    'APP_EVENTS_CACHE' => $tmp . '/events.php',
     'APP_PACKAGES_CACHE' => $tmp . '/packages.php',
-    'APP_ROUTES_CACHE' => $tmp . '/routes.php',
     'APP_SERVICES_CACHE' => $tmp . '/services.php',
+    'APP_EVENTS_CACHE' => $tmp . '/events.php',
     'VIEW_COMPILED_PATH' => $tmp . '/views',
     'APP_STORAGE_PATH' => $tmp . '/storage',
+    'APP_MAINTENANCE_DRIVER' => 'file',
+    'APP_MAINTENANCE_STORE' => 'array',
     'CACHE_STORE' => 'array',
     'CACHE_DRIVER' => 'array',
     'SESSION_DRIVER' => 'array',
@@ -67,7 +67,6 @@ foreach ($defaults as $key => $value) {
     }
 }
 
-// Empty package manifest so Laravel does not need to write bootstrap/cache.
 if (! is_file($tmp . '/packages.php')) {
     file_put_contents($tmp . '/packages.php', "<?php\nreturn array (\n);\n");
 }
