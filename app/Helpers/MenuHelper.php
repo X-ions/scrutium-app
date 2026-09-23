@@ -9,42 +9,43 @@ class MenuHelper
         return [
             [
                 'icon' => 'dashboard',
-                'name' => 'Dashboard',
-                'subItems' => [
-                    ['name' => 'Ecommerce', 'path' => '/'],
-                ],
+                'name' => 'Overview',
+                'path' => '/',
             ],
             [
                 'icon' => 'calendar',
-                'name' => 'Calendar',
-                'path' => '/calendar',
+                'name' => 'Campaigns',
+                'path' => '/campaigns',
             ],
             [
                 'icon' => 'user-profile',
-                'name' => 'User Profile',
-                'path' => '/profile',
+                'name' => 'Influencers',
+                'path' => '/influencers',
             ],
             [
-                'name' => 'Forms',
-                'icon' => 'forms',
-                'subItems' => [
-                    ['name' => 'Form Elements', 'path' => '/form-elements', 'pro' => false],
-                ],
+                'icon' => 'task',
+                'name' => 'Deliverables',
+                'path' => '/deliverables',
             ],
             [
-                'name' => 'Tables',
-                'icon' => 'tables',
-                'subItems' => [
-                    ['name' => 'Basic Tables', 'path' => '/basic-tables', 'pro' => false]
-                ],
-            ],
-            [
-                'name' => 'Pages',
                 'icon' => 'pages',
-                'subItems' => [
-                    ['name' => 'Blank Page', 'path' => '/blank', 'pro' => false],
-                    ['name' => '404 Error', 'path' => '/error-404', 'pro' => false]
-                ],
+                'name' => 'Content',
+                'path' => '/content',
+            ],
+            [
+                'icon' => 'charts',
+                'name' => 'Performance',
+                'path' => '/performance',
+            ],
+            [
+                'icon' => 'tables',
+                'name' => 'Reports',
+                'path' => '/reports',
+            ],
+            [
+                'icon' => 'chat',
+                'name' => 'Alerts',
+                'path' => '/alerts',
             ],
         ];
     }
@@ -53,32 +54,14 @@ class MenuHelper
     {
         return [
             [
-                'icon' => 'charts',
-                'name' => 'Charts',
-                'subItems' => [
-                    ['name' => 'Line Chart', 'path' => '/line-chart', 'pro' => false],
-                    ['name' => 'Bar Chart', 'path' => '/bar-chart', 'pro' => false]
-                ],
-            ],
-            [
-                'icon' => 'ui-elements',
-                'name' => 'UI Elements',
-                'subItems' => [
-                    ['name' => 'Alerts', 'path' => '/alerts', 'pro' => false],
-                    ['name' => 'Avatar', 'path' => '/avatars', 'pro' => false],
-                    ['name' => 'Badge', 'path' => '/badge', 'pro' => false],
-                    ['name' => 'Buttons', 'path' => '/buttons', 'pro' => false],
-                    ['name' => 'Images', 'path' => '/image', 'pro' => false],
-                    ['name' => 'Videos', 'path' => '/videos', 'pro' => false],
-                ],
+                'icon' => 'forms',
+                'name' => 'Integrations',
+                'path' => '/integrations',
             ],
             [
                 'icon' => 'authentication',
-                'name' => 'Authentication',
-                'subItems' => [
-                    ['name' => 'Sign In', 'path' => '/signin', 'pro' => false],
-                    ['name' => 'Sign Up', 'path' => '/signup', 'pro' => false],
-                ],
+                'name' => 'Settings',
+                'path' => '/settings',
             ],
         ];
     }
@@ -87,11 +70,11 @@ class MenuHelper
     {
         return [
             [
-                'title' => 'Menu',
+                'title' => 'Workspace',
                 'items' => self::getMainNavItems()
             ],
             [
-                'title' => 'Others',
+                'title' => 'System',
                 'items' => self::getOthersItems()
             ]
         ];

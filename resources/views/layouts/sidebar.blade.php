@@ -7,7 +7,7 @@
 @endphp
 
 <aside id="sidebar"
-    class="fixed flex flex-col mt-0 top-0 px-5 start-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 ltr:border-r rtl:border-l border-gray-200 w-[90px] [.sidebar-expanded_&]:min-w-[290px]"
+    class="fixed flex flex-col mt-0 top-0 px-5 start-0 bg-brand-900 text-white h-screen transition-all duration-300 ease-in-out z-99999 ltr:border-r rtl:border-l border-brand-800 w-[90px] [.sidebar-expanded_&]:min-w-[290px]"
     x-data="{
         openSubmenus: {},
         init() {
@@ -57,12 +57,11 @@
     @mouseleave="$store.sidebar.setHovered(false)">
     <!-- Logo Section -->
     <div class="pt-8 pb-7 flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-between'">
-        <a href="/">
+        <a href="/" class="flex items-center">
             <div class="hidden [.sidebar-expanded_&]:block">
-                <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" width="150" height="40" />
-                <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" width="150" height="40" />
+                <img class="h-9 w-auto max-w-[168px] object-contain brightness-0 invert" src="/images/logo/logo.png" alt="Scrutium" />
             </div>
-            <img class="block [.sidebar-expanded_&]:hidden" src="/images/logo/logo-icon.svg" alt="Logo" width="32" height="32" />
+            <img class="block h-8 w-8 object-contain brightness-0 invert [.sidebar-expanded_&]:hidden" src="/images/logo/logo.png" alt="Scrutium" />
         </a>
     </div>
 
@@ -73,7 +72,7 @@
                 @foreach ($menuGroups as $groupIndex => $menuGroup)
                     <div>
                         <!-- Menu Group Title -->
-                        <h2 class="mb-4 text-xs uppercase flex leading-[20px] text-gray-400"
+                        <h2 class="mb-4 text-xs uppercase flex leading-[20px] text-white/40"
                             :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ?
                             'lg:justify-center' : 'justify-start'">
                             <template

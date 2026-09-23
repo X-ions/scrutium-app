@@ -50,8 +50,7 @@
 
             <!-- Logo (mobile only) -->
             <a href="/" class="xl:hidden">
-                <img class="dark:hidden" src="/images/logo/logo.svg" alt="Logo" />
-                <img class="hidden dark:block" src="/images/logo/logo-dark.svg" alt="Logo" />
+                <img class="h-8 w-auto max-w-[140px] object-contain" src="/images/logo/logo.png" alt="Scrutium" />
             </a>
 
             <!-- Application Menu Toggle (mobile only) -->
