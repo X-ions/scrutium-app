@@ -41,6 +41,7 @@ class DashboardController extends Controller
         $flaggedCount = ContentPost::flagged()->count();
         $integrations = Integration::query()->get();
         $connectedIntegrations = $integrations->filter(fn (Integration $integration): bool => $integration->isHealthy())->count();
+        $integrityScore = $postCount > 0 ? round((1 - ($flaggedCount / $postCount)) * 100) : 100.0;
 
         return view('pages.dashboard.overview', [
             'title' => 'Overview',
@@ -49,7 +50,7 @@ class DashboardController extends Controller
                 ['label' => 'Active campaigns', 'value' => Campaign::open()->count(), 'detail' => 'Open workspace campaigns', 'tone' => 'brand'],
                 ['label' => 'Creators in roster', 'value' => Influencer::count(), 'detail' => 'Across your creator intelligence library', 'tone' => 'blue'],
                 ['label' => 'Deliverables outstanding', 'value' => Deliverable::outstanding()->count(), 'detail' => Deliverable::overdue()->count().' overdue', 'tone' => 'warning'],
-                ['label' => 'Integrity score', 'value' => $postCount > 0 ? round((1 - ($flaggedCount / $postCount)) * 100).'%' : '100%', 'detail' => $flaggedCount.' content flags to review', 'tone' => 'success'],
+                ['label' => 'Integrity score', 'value' => $integrityScore, 'suffix' => '%', 'detail' => $flaggedCount.' content flags to review', 'tone' => 'success'],
             ],
             'pipeline' => $pipeline,
             'attainment' => [

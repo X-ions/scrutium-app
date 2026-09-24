@@ -20,7 +20,7 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/signin', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
     Route::get('/signup', [AuthController::class, 'showRegister'])->name('signup');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register');
 });
 
 Route::middleware(['auth', 'tenant'])->group(function (): void {

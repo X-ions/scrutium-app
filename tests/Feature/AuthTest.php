@@ -10,6 +10,11 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => TenantContext::forget());
 afterEach(fn () => TenantContext::forget());
 
+it('renders the authentication pages', function () {
+    $this->get('/signin')->assertOk();
+    $this->get('/signup')->assertOk();
+});
+
 it('registers a workspace and authenticates its owner', function () {
     $response = $this->post('/register', [
         'name' => 'Workspace Owner',
@@ -39,7 +44,7 @@ it('keeps guests out and signs a user in', function () {
     $this->post('/login', [
         'email' => 'login@example.test',
         'password' => 'correct-horse-battery-staple',
-    ])->assertRedirect(route('dashboard'));
+    ])->assertRedirect(route('campaigns'));
 
     $this->assertAuthenticatedAs($user);
 });

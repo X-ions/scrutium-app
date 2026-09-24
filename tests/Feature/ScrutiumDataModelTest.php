@@ -153,3 +153,13 @@ it('gives each workspace a known login account', function () {
         ->and($owner->tenant->slug)->toBe('northwind')
         ->and($owner->canManageWorkspace())->toBeTrue();
 });
+
+it('renders the dashboard for an authenticated workspace owner', function () {
+    $this->seed(ScrutiumDemoSeeder::class);
+    $owner = User::where('email', 'owner@northwind.test')->firstOrFail();
+
+    $this->actingAs($owner)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Integrity score');
+});
