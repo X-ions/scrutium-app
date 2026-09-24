@@ -32,10 +32,11 @@ class MenuHelper
                 'name' => 'Content',
                 'path' => '/content',
             ],
+            ['icon' => 'charts', 'name' => 'Performance', 'path' => '/performance'],
             [
-                'icon' => 'charts',
-                'name' => 'Performance',
-                'path' => '/performance',
+                'icon' => 'task',
+                'name' => 'Scoring',
+                'path' => '/scoring',
             ],
             [
                 'icon' => 'tables',

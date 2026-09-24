@@ -155,7 +155,8 @@
             <!-- app header start -->
             @include('layouts.app-header')
             <!-- app header end -->
-            <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+            <div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+                @include('components.common.flash-messages')
                 @yield('content')
             </div>
         </div>

@@ -147,6 +147,8 @@ scrutium-app/
 
 ## Roadmap (from wireframes)
 
+> Live, actionable checklist of what's still missing: see **[TODO.md](./TODO.md)**.
+
 1. Rebrand UI (logo, nav labels, colors) → **Scrutium**
 2. Overview dashboard (data lifecycle, attainment, system integrity)
 3. Campaign Central + create-campaign flow
