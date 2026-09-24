@@ -117,18 +117,16 @@
         </div>
 
         <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-            <div class="mb-4 flex items-center justify-between">
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Efficiency leaders</h2>
-                    <p class="text-sm text-gray-500">Top creators by pulse score</p>
-                </div>
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white/90">Efficiency leaders</h2>
+                <p class="text-sm text-gray-500">Top creators by pulse score</p>
             </div>
             <ul class="divide-y divide-gray-100 dark:divide-gray-800">
                 @forelse ($topCreators as $creator)
                     <li class="flex items-center justify-between py-3">
                         <div class="min-w-0">
-                            <p class="truncate font-medium text-gray-800 dark:text-white/90">{{ $creator->name }}</p>
-                            <p class="text-xs text-gray-400">{{ number_format((int) $creator->reach) }} reach</p>
+                            <p class="truncate font-medium text-gray-800 dark:text-white/90">{{ $creator->displayName() }}</p>
+                            <p class="text-xs text-gray-400">{{ $creator->formattedFollowers() }} followers</p>
                         </div>
                         <span class="text-sm font-semibold text-success-600">{{ number_format((float) $creator->pulse_score, 1) }}</span>
                     </li>
