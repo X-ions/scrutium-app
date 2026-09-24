@@ -1,0 +1,37 @@
+name: Migrate Neon
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - database/migrations/**
+      - .github/workflows/migrate.yml
+
+jobs:
+  migrate:
+    name: php artisan migrate --force
+    runs-on: ubuntu-latest
+    if: ${{ secrets.DATABASE_URL != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_pgsql, pgsql
+          coverage: none
+      - name: Install Composer dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+      - name: Run migrations
+        env:
+          APP_ENV: production
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_CONNECTION: pgsql
+          DB_SSLMODE: require
+          DB_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$APP_KEY" ]; then
+            php artisan key:generate --force
+          fi
+          php artisan migrate --force --no-interaction

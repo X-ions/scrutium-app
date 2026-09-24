@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +27,17 @@ class AppServiceProvider extends ServiceProvider
     {
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+        }
+
+        $autoMigrate = filter_var(env('SCRUTIUM_AUTO_MIGRATE', true), FILTER_VALIDATE_BOOLEAN);
+        if ($autoMigrate && env('DB_CONNECTION') === 'pgsql') {
+            try {
+                if (! Schema::hasTable('tenants')) {
+                    Artisan::call('migrate', ['--force' => true]);
+                }
+            } catch (Throwable $e) {
+                report($e);
+            }
         }
     }
 }

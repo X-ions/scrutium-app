@@ -7,7 +7,7 @@
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.7.4",
-      "includeFiles": "{app/**,bootstrap/**,config/**,database/**,public/**,resources/**,routes/**,storage/**,vendor/**}"
+      "includeFiles": "{app/**,bootstrap/**,config/**,database/**,public/**,resources/**,routes/**,storage/**,vendor/**,api/**}"
     }
   },
   "routes": [
@@ -38,10 +38,14 @@
     "APP_ROUTES_CACHE": "/tmp/scrutium/routes.php",
     "APP_SERVICES_CACHE": "/tmp/scrutium/services.php",
     "VIEW_COMPILED_PATH": "/tmp/scrutium/views",
-    "CACHE_STORE": "array",
-    "CACHE_DRIVER": "array",
+    "DB_CONNECTION": "pgsql",
+    "DB_SSLMODE": "require",
+    "SCRUTIUM_AUTO_MIGRATE": "true",
+    "CACHE_STORE": "database",
+    "CACHE_DRIVER": "database",
     "SESSION_ENCRYPT": "true",
-    "SESSION_DRIVER": "cookie",
+    "SESSION_DRIVER": "database",
+    "SESSION_SECURE_COOKIE": "true",
     "LOG_CHANNEL": "stderr",
     "QUEUE_CONNECTION": "sync"
   }
