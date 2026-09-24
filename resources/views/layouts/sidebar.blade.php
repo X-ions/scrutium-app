@@ -7,7 +7,7 @@
 @endphp
 
 <aside id="sidebar"
-    class="fixed flex flex-col mt-0 top-0 px-5 start-0 bg-[#0B1B33] text-white h-screen transition-all duration-300 ease-in-out z-99999 w-[90px] [.sidebar-expanded_&]:min-w-[290px]"
+    class="fixed flex flex-col mt-0 top-0 px-5 start-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 ltr:border-r rtl:border-l border-gray-200 w-[90px] [.sidebar-expanded_&]:min-w-[290px]"
     x-data="{
         openSubmenus: {},
         init() {
@@ -52,14 +52,14 @@
     <div class="pt-8 pb-6 flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
         <a href="{{ url('/') }}" class="flex items-center gap-3 min-w-0">
             <img src="{{ asset('images/logo/logo.png') }}" alt="Scrutium" class="h-9 w-9 shrink-0 rounded-xl object-cover bg-white" />
-            <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="truncate text-lg font-semibold tracking-tight text-white">Scrutium</span>
+            <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="truncate text-lg font-semibold tracking-tight text-gray-800 dark:text-white/90">Scrutium</span>
         </a>
     </div>
 
     @if ($workspace)
-        <div class="mb-6 hidden rounded-xl bg-white/5 px-3 py-2.5 [.sidebar-expanded_&]:block">
-            <p class="text-[10px] uppercase tracking-wider text-white/40">Workspace</p>
-            <p class="truncate text-sm font-medium text-white">{{ $workspace->name }}</p>
+        <div class="mb-6 hidden rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-white/5 [.sidebar-expanded_&]:block">
+            <p class="text-[10px] uppercase tracking-wider text-gray-400">Workspace</p>
+            <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
         </div>
     @endif
 
@@ -68,13 +68,15 @@
             <div class="flex flex-col gap-4">
                 @foreach ($menuGroups as $groupIndex => $menuGroup)
                     <div>
-                        <h2 class="mb-4 text-xs uppercase flex leading-[20px] text-white/35"
+                        <h2 class="mb-4 text-xs uppercase flex leading-[20px] text-gray-400"
                             :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'lg:justify-center' : 'justify-start'">
                             <template x-if="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen">
                                 <span>{{ __($menuGroup['title']) }}</span>
                             </template>
                             <template x-if="!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen">
-                                <span class="block h-px w-5 bg-white/20"></span>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M4.25 12C4.25 11.5858 4.58579 11.25 5 11.25H19C19.4142 11.25 19.75 11.5858 19.75 12C19.75 12.4142 19.4142 12.75 19 12.75H5C4.58579 12.75 4.25 12.4142 4.25 12Z" fill="currentColor"/>
+                                </svg>
                             </template>
                         </h2>
                         <ul class="flex flex-col gap-1">
@@ -82,10 +84,10 @@
                                 <li>
                                     <a href="{{ $item['path'] }}" class="menu-item group"
                                         :class="[
-                                            isActive('{{ $item['path'] }}') ? 'bg-blue-600 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white',
+                                            isActive('{{ $item['path'] }}') ? 'menu-item-active' : 'menu-item-inactive',
                                             (!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'xl:justify-center' : 'xl:justify-start'
                                         ]">
-                                        <span :class="isActive('{{ $item['path'] }}') ? 'text-white' : 'text-white/50'">
+                                        <span :class="isActive('{{ $item['path'] }}') ? 'menu-item-icon-active' : 'menu-item-icon-inactive'">
                                             {!! MenuHelper::getIconSvg($item['icon']) !!}
                                         </span>
                                         <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="menu-item-text">
@@ -102,12 +104,12 @@
     </div>
 
     @if ($authUser)
-        <div class="mt-auto border-t border-white/10 py-5">
+        <div class="mt-auto border-t border-gray-200 py-5 dark:border-gray-800">
             <div class="flex items-center gap-3" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : ''">
-                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-semibold text-white">{{ $authUser->initials() }}</span>
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">{{ $authUser->initials() }}</span>
                 <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="min-w-0">
-                    <p class="truncate text-sm font-medium text-white">{{ $authUser->name }}</p>
-                    <p class="truncate text-xs text-white/50">{{ $authUser->job_title ?: $authUser->role()->name }}</p>
+                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $authUser->name }}</p>
+                    <p class="truncate text-xs text-gray-400">{{ $authUser->job_title ?: $authUser->role()->name }}</p>
                 </div>
             </div>
         </div>
