@@ -14,7 +14,31 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScoringController;
 use App\Http\Controllers\SettingsController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
+
+Route::get('/health/db', function () {
+    try {
+        DB::select('select 1 as ok');
+
+        return response()->json([
+            'ok' => true,
+            'driver' => config('database.default'),
+            'pdo_pgsql' => extension_loaded('pdo_pgsql'),
+            'tenants' => Schema::hasTable('tenants'),
+            'users' => Schema::hasTable('users'),
+        ]);
+    } catch (Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'driver' => config('database.default'),
+            'pdo_pgsql' => extension_loaded('pdo_pgsql'),
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/signin', [AuthController::class, 'showLogin'])->name('login');
