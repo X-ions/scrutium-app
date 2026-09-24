@@ -3,8 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,20 +11,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        $middleware->alias([
+            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+            'guest' => \Illuminate\Auth\Middleware\RedirectIfAuthenticated::class,
+            'tenant' => \App\Http\Middleware\ResolveTenant::class,
+            'operate' => \App\Http\Middleware\EnsureCanOperate::class,
+            'workspace-admin' => \App\Http\Middleware\EnsureWorkspaceAdministrator::class,
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (Throwable $e, Request $request) {
-            return response(
-                "SCRUTIUM ERROR\n\n".
-                $e::class.': '.$e->getMessage()."\n".
-                $e->getFile().':'.$e->getLine()."\n\n".
-                $e->getTraceAsString(),
-                500,
-                ['Content-Type' => 'text/plain; charset=utf-8']
-            );
-        });
-    })->create();
+        // Application exception handling is provided by Laravel's default handler.
+    })
+    ->create();

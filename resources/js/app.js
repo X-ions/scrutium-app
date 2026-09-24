@@ -21,6 +21,11 @@ Alpine.start();
 
 // Initialize components on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-width]').forEach((element) => {
+        element.style.width = `${Math.max(0, Math.min(100, Number(element.dataset.width) || 0))}%`;
+    });
+
+
     // Map imports
     if (document.querySelector('#mapOne')) {
         import('./components/map').then(module => module.initMap());

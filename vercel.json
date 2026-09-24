@@ -8,18 +8,25 @@
     "api/index.php": {
       "runtime": "vercel-php@0.7.4",
       "includeFiles": "{app/**,bootstrap/**,config/**,database/**,public/**,resources/**,routes/**,storage/**,vendor/**}"
-    },
-    "api/debug.php": {
-      "runtime": "vercel-php@0.7.4",
-      "includeFiles": "{app/**,bootstrap/**,config/**,database/**,public/**,resources/**,routes/**,storage/**,vendor/**}"
     }
   },
   "routes": [
-    { "src": "/debug", "dest": "/api/debug.php" },
-    { "src": "/build/(.*)", "dest": "/public/build/$1" },
-    { "src": "/favicon.ico", "dest": "/public/favicon.ico" },
-    { "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|map|webp))", "dest": "/public/$1" },
-    { "src": "/(.*)", "dest": "/api/index.php" }
+    {
+      "src": "/build/(.*)",
+      "dest": "/public/build/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/public/favicon.ico"
+    },
+    {
+      "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|map|webp))",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.php"
+    }
   ],
   "env": {
     "APP_NAME": "Scrutium",
@@ -33,7 +40,8 @@
     "VIEW_COMPILED_PATH": "/tmp/scrutium/views",
     "CACHE_STORE": "array",
     "CACHE_DRIVER": "array",
-    "SESSION_DRIVER": "array",
+    "SESSION_ENCRYPT": "true",
+    "SESSION_DRIVER": "cookie",
     "LOG_CHANNEL": "stderr",
     "QUEUE_CONNECTION": "sync"
   }

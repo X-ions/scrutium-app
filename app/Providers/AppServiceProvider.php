@@ -14,11 +14,9 @@ class AppServiceProvider extends ServiceProvider
             $this->app->useStoragePath($storage);
         }
 
-        if ($this->app->bound('config')) {
+        if ($this->app->bound('config') && $this->app->environment('production')) {
             $this->app['config']->set('app.maintenance.driver', 'file');
             $this->app['config']->set('app.maintenance.store', 'array');
-            $this->app['config']->set('cache.default', 'array');
-            $this->app['config']->set('session.driver', 'array');
         }
     }
 
