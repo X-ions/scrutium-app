@@ -29,7 +29,6 @@ foreach ($dirs as $dir) {
     }
 }
 
-// Always override: Vercel filesystem is read-only except /tmp.
 $forced = [
     'APP_PACKAGES_CACHE' => $tmp . '/packages.php',
     'APP_SERVICES_CACHE' => $tmp . '/services.php',
@@ -38,9 +37,6 @@ $forced = [
     'APP_STORAGE_PATH' => $tmp . '/storage',
     'APP_MAINTENANCE_DRIVER' => 'file',
     'APP_MAINTENANCE_STORE' => 'array',
-    'CACHE_STORE' => 'array',
-    'CACHE_DRIVER' => 'array',
-    'SESSION_DRIVER' => 'array',
     'QUEUE_CONNECTION' => 'sync',
     'LOG_CHANNEL' => 'stderr',
     'LOG_LEVEL' => 'debug',
@@ -56,8 +52,6 @@ $defaults = [
     'APP_ENV' => 'production',
     'APP_URL' => 'https://scrutium.vercel.app',
     'FILESYSTEM_DISK' => 'local',
-    'DB_CONNECTION' => 'sqlite',
-    'DB_DATABASE' => $tmp . '/database.sqlite',
 ];
 foreach ($defaults as $key => $value) {
     if (getenv($key) === false || getenv($key) === '') {
@@ -67,20 +61,45 @@ foreach ($defaults as $key => $value) {
     }
 }
 
+$neonUrl = scrutium_env_first([
+    'DB_URL',
+    'DATABASE_URL',
+    'POSTGRES_URL',
+    'POSTGRES_PRISMA_URL',
+    'DATABASE_URL_UNPOOLED',
+    'POSTGRES_URL_NON_POOLING',
+]);
+
+if (is_string($neonUrl) && $neonUrl !== '') {
+    $neonUrl = scrutium_prepare_database_url($neonUrl);
+    scrutium_putenv('DB_URL', $neonUrl);
+    scrutium_putenv('DB_CONNECTION', 'pgsql');
+    scrutium_putenv('DB_SSLMODE', 'require');
+
+    $sessionDriver = getenv('SESSION_DRIVER');
+    if ($sessionDriver === false || $sessionDriver === '' || $sessionDriver === 'array') {
+        scrutium_putenv('SESSION_DRIVER', 'database');
+    }
+    $cacheStore = getenv('CACHE_STORE');
+    if ($cacheStore === false || $cacheStore === '' || $cacheStore === 'array') {
+        scrutium_putenv('CACHE_STORE', 'database');
+    }
+} else {
+    scrutium_putenv('DB_CONNECTION', getenv('DB_CONNECTION') ?: 'sqlite');
+    $dbPath = getenv('DB_DATABASE') ?: ($tmp . '/database.sqlite');
+    scrutium_putenv('DB_DATABASE', $dbPath);
+    if (! file_exists($dbPath)) {
+        @touch($dbPath);
+    }
+}
+
 if (! is_file($tmp . '/packages.php')) {
     file_put_contents($tmp . '/packages.php', "<?php\nreturn array (\n);\n");
 }
 
 if (empty(getenv('APP_KEY'))) {
     $key = 'base64:' . base64_encode(random_bytes(32));
-    putenv("APP_KEY={$key}");
-    $_ENV['APP_KEY'] = $key;
-    $_SERVER['APP_KEY'] = $key;
-}
-
-$dbPath = getenv('DB_DATABASE') ?: ($tmp . '/database.sqlite');
-if ((getenv('DB_CONNECTION') ?: 'sqlite') === 'sqlite' && ! file_exists($dbPath)) {
-    @touch($dbPath);
+    scrutium_putenv('APP_KEY', $key);
 }
 
 try {
@@ -101,4 +120,58 @@ try {
         $current = $current->getPrevious();
         $i++;
     }
+}
+
+function scrutium_putenv(string $key, string $value): void
+{
+    putenv("{$key}={$value}");
+    $_ENV[$key] = $value;
+    $_SERVER[$key] = $value;
+}
+
+/** @param list<string> $keys */
+function scrutium_env_first(array $keys): ?string
+{
+    foreach ($keys as $key) {
+        $value = getenv($key);
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+        if (! empty($_ENV[$key]) && is_string($_ENV[$key])) {
+            return $_ENV[$key];
+        }
+    }
+
+    return null;
+}
+
+function scrutium_prepare_database_url(string $url): string
+{
+    $url = preg_replace('#^postgresql://#i', 'postgres://', $url) ?: $url;
+    $parts = parse_url($url);
+    if (! is_array($parts) || empty($parts['host'])) {
+        return $url;
+    }
+
+    $host = $parts['host'];
+    $endpoint = null;
+    if (preg_match('/^(ep-[a-z0-9-]+)/i', $host, $matches) === 1) {
+        $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
+    }
+
+    parse_str($parts['query'] ?? '', $query);
+    $query['sslmode'] = $query['sslmode'] ?? 'require';
+    $query['channel_binding'] = $query['channel_binding'] ?? 'disable';
+
+    $password = urldecode((string) ($parts['pass'] ?? ''));
+    if ($endpoint && $password !== '' && ! str_contains($password, 'endpoint=')) {
+        $password = 'endpoint=' . $endpoint . ';' . $password;
+    }
+
+    $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
+    $auth = $user . ':' . rawurlencode($password);
+    $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+    $path = $parts['path'] ?? '/neondb';
+
+    return 'postgres://' . $auth . '@' . $host . $port . $path . '?' . http_build_query($query);
 }
