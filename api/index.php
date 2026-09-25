@@ -153,25 +153,17 @@ function scrutium_prepare_database_url(string $url): string
         return $url;
     }
 
-    $host = $parts['host'];
-    $endpoint = null;
-    if (preg_match('/^(ep-[a-z0-9-]+)/i', $host, $matches) === 1) {
-        $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
-    }
-
     parse_str($parts['query'] ?? '', $query);
     $query['sslmode'] = $query['sslmode'] ?? 'require';
-    $query['channel_binding'] = $query['channel_binding'] ?? 'disable';
-
-    $password = urldecode((string) ($parts['pass'] ?? ''));
-    if ($endpoint && $password !== '' && ! str_contains($password, 'endpoint=')) {
-        $password = 'endpoint=' . $endpoint . ';' . $password;
-    }
+    // channel_binding=require breaks PHP PDO pgsql on Vercel/Neon
+    $query['channel_binding'] = 'disable';
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
-    $auth = $user . ':' . rawurlencode($password);
+    $password = rawurlencode(urldecode((string) ($parts['pass'] ?? '')));
+    $auth = $user . ':' . $password;
     $port = isset($parts['port']) ? ':' . $parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';
+    $host = $parts['host'];
 
     return 'postgres://' . $auth . '@' . $host . $port . $path . '?' . http_build_query($query);
 }
