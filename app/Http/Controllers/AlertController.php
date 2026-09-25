@@ -71,6 +71,7 @@ class AlertController extends Controller
 
     public function updateSubscription(Request $request, AlertSubscription $subscription): RedirectResponse
     {
+        abort_unless($subscription->tenant_id === $request->user()->tenant_id, 404);
         abort_unless($subscription->user_id === $request->user()->id, 403);
 
         $subscription->update(['is_active' => $request->boolean('is_active')]);

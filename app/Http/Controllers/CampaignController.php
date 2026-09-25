@@ -110,6 +110,8 @@ class CampaignController extends Controller
 
     public function addCreator(Request $request, Campaign $campaign): RedirectResponse
     {
+        abort_unless($campaign->tenant_id === $request->user()->tenant_id, 404);
+
         $data = $request->validate([
             'influencer_id' => ['required', Rule::exists('influencers', 'id')->where('tenant_id', $request->user()->tenant_id)],
             'role' => ['nullable', 'string', 'max:80'],
@@ -129,9 +131,11 @@ class CampaignController extends Controller
         return back()->with('success', 'Creator added to the campaign roster.');
     }
 
-    public function removeCreator(Campaign $campaign, Influencer $influencer): RedirectResponse
+    public function removeCreator(Request $request, Campaign $campaign, Influencer $influencer): RedirectResponse
     {
+        abort_unless($campaign->tenant_id === $request->user()->tenant_id, 404);
         abort_unless($influencer->tenant_id === $campaign->tenant_id, 404);
+
         $campaign->influencers()->detach($influencer->id);
 
         return back()->with('success', 'Creator removed from the roster.');
@@ -139,6 +143,8 @@ class CampaignController extends Controller
 
     public function storeDeliverable(Request $request, Campaign $campaign): RedirectResponse
     {
+        abort_unless($campaign->tenant_id === $request->user()->tenant_id, 404);
+
         $data = $request->validate([
             'influencer_id' => ['required', Rule::exists('campaign_influencer', 'influencer_id')->where('campaign_id', $campaign->id)],
             'title' => ['required', 'string', 'max:180'],

@@ -40,8 +40,8 @@ class DeliverableController extends Controller
     public function submit(Request $request, Deliverable $deliverable): RedirectResponse
     {
         $data = $request->validate([
-            'evidence' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,mp4', 'max:10240'],
-            'evidence_url' => ['nullable', 'url', 'max:2048'],
+            'evidence' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf,mp4', 'max:10240', 'required_without:evidence_url'],
+            'evidence_url' => ['nullable', 'url', 'max:2048', 'required_without:evidence'],
             'delivered_units' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
 
@@ -63,6 +63,7 @@ class DeliverableController extends Controller
     {
         abort_unless($deliverable->tenant_id === $request->user()->tenant_id, 404);
         abort_unless($deliverable->statusEnum() === DeliverableStatus::Submitted, 422, 'Only submitted deliverables can be approved.');
+        abort_if(blank($deliverable->evidence_path), 422, 'Submitted deliverables must include evidence before approval.');
 
         $deliverable->approve($request->user());
         $campaign = $deliverable->campaign;
@@ -76,7 +77,7 @@ class DeliverableController extends Controller
         abort_unless($deliverable->tenant_id === $request->user()->tenant_id, 404);
         $data = $request->validate(['reason' => ['required', 'string', 'max:1000']]);
 
-        abort_if($deliverable->statusEnum() === DeliverableStatus::Approved, 422, 'Approved deliverables cannot be rejected.');
+        abort_unless($deliverable->statusEnum() === DeliverableStatus::Submitted, 422, 'Only submitted deliverables can be rejected.');
 
         $deliverable->reject($data['reason'], $request->user());
 
