@@ -7,7 +7,6 @@ Campaign management, deliverable verification, performance analytics, scoring en
 > UI foundation is based on [TailAdmin Laravel](https://tailadmin.com/laravel) (Laravel 12 + Tailwind CSS v4 + Alpine.js). Product design, branding, and domain features are **Scrutium**.
 
 ---
-
 ## What Scrutium does
 
 | Area | Capability |
