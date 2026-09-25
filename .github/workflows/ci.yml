@@ -12,14 +12,55 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # Lint & format (enable when you add a frontend/backend package)
-  # ---------------------------------------------------------------------------
-  lint:
-    name: Lint
+  backend:
+    name: Backend checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, intl, mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Generate application key
+        run: php artisan key:generate --force
+
+      - name: Validate Composer metadata
+        run: composer validate --strict
+
+      - name: Check PHP syntax
+        run: find app database routes tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets for feature tests
+        run: npm run build
+
+      - name: Run tests
+        run: php artisan test
+
+  frontend:
+    name: Frontend build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,118 +69,39 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '22'
           cache: npm
-          cache-dependency-path: "**/package-lock.json"
+          cache-dependency-path: package-lock.json
 
-      # Uncomment when package.json exists at repo root or in apps/*
-      # - name: Install dependencies
-      #   run: npm ci
-      #
-      # - name: Lint
-      #   run: npm run lint
-      #
-      # - name: Typecheck
-      #   run: npm run typecheck
+      - name: Install npm dependencies
+        run: npm ci
 
-      - name: Placeholder
-        run: echo "Lint job ready — enable steps after scaffolding the app"
+      - name: Build frontend
+        run: npm run build
 
-  # ---------------------------------------------------------------------------
-  # Unit / integration tests
-  # ---------------------------------------------------------------------------
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
-
-      # - name: Install dependencies
-      #   run: npm ci
-      #
-      # - name: Run tests
-      #   run: npm test -- --coverage
-      #
-      # - name: Upload coverage
-      #   uses: codecov/codecov-action@v4
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     files: ./coverage/lcov.info
-
-      - name: Placeholder
-        run: echo "Test job ready — enable steps after adding test suite"
-
-  # ---------------------------------------------------------------------------
-  # Build (frontend / backend / docs)
-  # ---------------------------------------------------------------------------
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
-
-      # - name: Install dependencies
-      #   run: npm ci
-      #
-      # - name: Build
-      #   run: npm run build
-      #
-      # - name: Upload build artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: build
-      #     path: |
-      #       dist/
-      #       .next/
-      #     retention-days: 7
-
-      - name: Placeholder
-        run: echo "Build job ready — enable steps after scaffolding"
-
-  # ---------------------------------------------------------------------------
-  # Security & dependency audit
-  # ---------------------------------------------------------------------------
   security:
-    name: Security
+    name: Dependency audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      # - name: Install dependencies
-      #   run: npm ci
-      #
-      # - name: npm audit
-      #   run: npm audit --audit-level=high
-      #   continue-on-error: true
+      - name: Audit Composer dependencies
+        run: composer audit --no-interaction
 
-      - name: Gitleaks (secrets scan)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-
-      - name: Placeholder
-        run: echo "Security checks configured"
+      - name: Audit production npm dependencies
+        run: npm ci && npm audit --omit=dev --audit-level=high

@@ -22,6 +22,8 @@ class ScoringController extends Controller
 
     public function updateConfig(Request $request, ScoreConfig $config): RedirectResponse
     {
+        abort_unless($config->tenant_id === $request->user()->tenant_id, 404);
+
         $data = $request->validate([
             'engagement_rate' => ['required', 'numeric', 'min:0', 'max:1'],
             'audience_quality' => ['required', 'numeric', 'min:0', 'max:1'],

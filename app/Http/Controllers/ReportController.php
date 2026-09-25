@@ -50,7 +50,7 @@ class ReportController extends Controller
         return back()->with('success', 'Report generated and frozen as version '.$report->version.'.');
     }
 
-    public function publish(Report $report): RedirectResponse
+    public function publish(Request $request, Report $report): RedirectResponse
     {
         abort_unless($report->tenant_id === $request->user()->tenant_id, 404);
         abort_if($report->statusEnum() === ReportStatus::Draft, 422, 'Freeze the report before publishing it.');

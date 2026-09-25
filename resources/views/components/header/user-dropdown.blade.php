@@ -17,20 +17,6 @@
             flag: 'flag-sa.svg',
             badge: 'RTL',
             dir: 'rtl'
-        },
-        {
-            id: 'es',
-            name: 'Español',
-            shortName: 'Español',
-            flag: 'flag-es.svg',
-            dir: 'ltr'
-        },
-        {
-            id: 'de',
-            name: 'Deutsch',
-            shortName: 'Deutsch',
-            flag: 'flag-de.svg',
-            dir: 'ltr'
         }
     ],
     get currentLang() {

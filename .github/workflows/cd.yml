@@ -47,22 +47,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
-      # - name: Install & build
-      #   run: |
-      #     npm ci
-      #     npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
 
       - name: Set image metadata
         id: meta
         run: |
           echo "tags=scrutium:${{ github.sha }}" >> $GITHUB_OUTPUT
-
-      - name: Placeholder build
-        run: echo "Build step ready — wire to your Dockerfile or build script"
 
   # ---------------------------------------------------------------------------
   # Deploy to Staging
