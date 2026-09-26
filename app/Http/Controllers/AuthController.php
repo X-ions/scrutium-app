@@ -86,14 +86,12 @@ class AuthController extends Controller
                     'job_title' => 'Workspace owner',
                 ]);
 
-                $scoreConfig = new ScoreConfig([
+                ScoreConfig::create([
                     'name' => 'Default creator score',
                     'description' => 'Balanced starting weights for creator evaluation.',
                     'weights' => ScoreConfig::DEFAULT_WEIGHTS,
                     'is_default' => true,
-                    'tenant_id' => $tenant->id,
                 ]);
-                $scoreConfig->save();
 
                 AlertSubscription::create([
                     'user_id' => $user->id,

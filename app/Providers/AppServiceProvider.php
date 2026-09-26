@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Database\Connections\PostgresConnection;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -12,6 +14,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->make(DatabaseManager::class)->extend(
+            'pgsql',
+            fn (array $config, string $name) => new PostgresConnection($config)
+        );
+
         $storage = getenv('APP_STORAGE_PATH') ?: ($_ENV['APP_STORAGE_PATH'] ?? null);
         if ($storage) {
             $this->app->useStoragePath($storage);
