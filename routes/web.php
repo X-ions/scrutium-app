@@ -14,73 +14,30 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScoringController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
-Route::get('/build', function () {
-    return response()->json([
-        'build' => config('app.build'),
-        'laravel' => app()->version(),
-        'php' => PHP_VERSION,
-    ]);
-});
-
 Route::get('/health/db', function () {
-    $rawUrl = (string) (getenv('DB_URL') ?: '');
-
-    // Report the shape of the real connection URL so nobody has to guess at it.
-    // Never includes the username or password: only the structural facts needed
-    // to explain why a connection is failing.
-    $urlShape = [
-        'scheme' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_SCHEME) : null,
-        'host' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_HOST) : null,
-        'port' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_PORT) : null,
-        'url_has_password' => $rawUrl === '' ? null : parse_url($rawUrl, PHP_URL_PASS) !== null,
-        'url_path' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_PATH) : null,
-        'url_query_keys' => $rawUrl === ''
-            ? []
-            : array_keys((array) parse_url($rawUrl, PHP_URL_QUERY)),
-    ];
-
-    $diagnostics = [
-        'build' => config('app.build'),
-        'url_shape' => $urlShape,
-        'driver' => config('database.default'),
-        'pdo_pgsql' => extension_loaded('pdo_pgsql'),
-        'db_neon_endpoint_env' => getenv('DB_NEON_ENDPOINT') ?: null,
-        'configured_neon_endpoint' => config('database.connections.pgsql.neon_endpoint'),
-        'db_password_present' => (bool) (getenv('DB_PASSWORD') ?: ''),
-        'db_password_has_endpoint' => str_starts_with(
-            (string) (getenv('DB_PASSWORD') ?: ''),
-            'endpoint='
-        ),
-        'db_host' => config('database.connections.pgsql.host'),
-        'db_port' => config('database.connections.pgsql.port'),
-        'db_database' => config('database.connections.pgsql.database'),
-    ];
-
-    try {
-        $diagnostics['connector'] = get_class(app('db.factory')->createConnector(config('database.connections.pgsql')));
-    } catch (Throwable $e) {
-        $diagnostics['connector'] = 'unavailable: '.$e->getMessage();
-    }
-
     try {
         DB::select('select 1 as ok');
-        $diagnostics['ok'] = true;
-        $diagnostics['tenants'] = Schema::hasTable('tenants');
-        $diagnostics['users'] = Schema::hasTable('users');
+
+        return response()->json([
+            'ok' => true,
+            'driver' => config('database.default'),
+            'pdo_pgsql' => extension_loaded('pdo_pgsql'),
+            'tenants' => Schema::hasTable('tenants'),
+            'users' => Schema::hasTable('users'),
+        ]);
     } catch (Throwable $e) {
         report($e);
 
-        $diagnostics['ok'] = false;
-        $diagnostics['error'] = $e->getMessage();
+        return response()->json([
+            'ok' => false,
+            'driver' => config('database.default'),
+            'pdo_pgsql' => extension_loaded('pdo_pgsql'),
+        ], 500);
     }
-
-    // Never let diagnostics themselves take the endpoint down.
-    return response()->json($diagnostics, $diagnostics['ok'] ? 200 : 500);
 });
 
 Route::middleware('guest')->group(function (): void {
@@ -96,7 +53,6 @@ Route::middleware(['auth', 'tenant'])->group(function (): void {
         ->whereIn('locale', array_keys(LocaleController::SUPPORTED_LOCALES))
         ->name('locale.switch');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/how-it-works', [TourController::class, 'index'])->name('how-it-works');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
@@ -139,7 +95,6 @@ Route::middleware(['auth', 'tenant'])->group(function (): void {
         Route::patch('/alerts/subscriptions/{subscription}', [AlertController::class, 'updateSubscription'])->name('alerts.subscriptions.update');
         Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations');
         Route::post('/integrations', [IntegrationController::class, 'store'])->name('integrations.store');
-        Route::patch('/integrations/{integration}/credentials', [IntegrationController::class, 'updateCredentials'])->name('integrations.credentials');
         Route::post('/integrations/{integration}/connect', [IntegrationController::class, 'connect'])->name('integrations.connect');
         Route::post('/integrations/{integration}/disconnect', [IntegrationController::class, 'disconnect'])->name('integrations.disconnect');
     });

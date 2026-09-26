@@ -4,21 +4,9 @@
  * Vercel serverless entrypoint for Laravel (vercel-php).
  * Must run before public/index.php so cache/storage paths are writable.
  */
-/*
-| Errors are logged, never printed. Two reasons:
-|
-| 1. Correctness. Emitting *any* output before the response headers are sent
-|    makes PHP discard them, including Set-Cookie. A stray deprecation notice
-|    was therefore costing every visitor their session and turning every form
-|    post into a 419.
-| 2. Security. display_errors leaks absolute paths, SQL and stack frames.
-|
-| Laravel's own handler and the stderr log channel report failures.
-*/
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
-ini_set('display_errors', '0');
-ini_set('display_startup_errors', '0');
-ini_set('log_errors', '1');
 
 $tmp = '/tmp/scrutium';
 $dirs = [
@@ -174,118 +162,20 @@ function scrutium_prepare_database_url(string $url): string
 
     $host = $parts['host'];
     $endpoint = null;
-    /*
-     * The endpoint is the first label of the host, without any "-pooler"
-     * suffix. Neon is not consistent about naming: current endpoints look like
-     * "ep-xxxx-pooler.us-east-1.aws.neon.tech" but older projects use names with
-     * no "ep-" prefix at all, such as "ep-xxxx.us-east-2.aws.neon.tech" and the
-     * legacy "<name>.region.aws.neon.tech". Matching on the "ep-" prefix alone
-     * silently produced no endpoint at all for those, which is indistinguishable
-     * from the fix not being deployed.
-     */
-    if (preg_match('/^([a-z0-9][a-z0-9-]*)\./i', $host, $matches) === 1) {
-        $candidate = $matches[1];
-
-        if (preg_match('/\.(neon\.tech|neon\.build)$/i', $host) === 1) {
-            $endpoint = preg_replace('/-pooler$/i', '', $candidate) ?: $candidate;
-        }
+    // Neon-style endpoint detection (ep-*)
+    if (preg_match('/^(ep-[a-z0-9-]+)/i', $host, $matches) === 1) {
+        $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
     }
-
-    $password = urldecode((string) ($parts['pass'] ?? ''));
+    // Vercel Postgres doesn't use endpoint in password, keep as-is
 
     parse_str($parts['query'] ?? '', $query);
     $query['sslmode'] = $query['sslmode'] ?? 'require';
     // channel_binding=require breaks PHP PDO pgsql on Vercel/Neon
     $query['channel_binding'] = 'disable';
 
-    // Neon pooled endpoints (ep-*-pooler.<region>.aws.neon.tech) terminate TLS
-    // with SNI, so libpq must be told which endpoint it is reaching:
-    //   SQLSTATE[08006] "Endpoint ID is not specified"
-    // That parameter only survives if it reaches libpq intact, which means
-    // surviving Laravel's config parsing, the DSN builder and PDO's option map.
-    //
-    // Rather than depend on all of that, talk to the endpoint directly: drop
-    // the "-pooler" label and the connection needs no extra parameter at all.
-    // The direct and pooled URLs share credentials, so this is a host rewrite
-    // and nothing else. The cost is losing PgBouncer's connection pooling,
-    // which is an optimisation, not a requirement.
-    if ($endpoint !== null) {
-        $host = $endpoint.'.'.preg_replace('/^[^.]+\./', '', $host);
-
-        /*
-         * Neon enforces SNI, so every connection needs the endpoint id:
-         *   SQLSTATE[08006] "Endpoint ID is not specified"
-         *
-         * Three channels were tried and all fail with this runtime, because the
-         * bundled libpq has no SNI support and PDO_PGSQL only forwards a
-         * whitelist of DSN keywords:
-         *
-         *   ?options=endpoint%3D... on the URL -> Laravel's Connector::getOptions()
-         *                                            expects a PDO option map and
-         *                                            throws "array_diff_key(): arg 2
-         *                                            must be of type array"
-         *   options=... inside the pgsql: DSN -> dropped by PDO_PGSQL before libpq
-         *   PGOPTIONS environment variable   -> not honoured by the bundled libpq
-         *
-         * Neon's documented workaround D is the channel that works: libpq parses
-         * connection parameters out of the password field, and PDO passes the
-         * password through untouched. This is the workaround Neon's own Laravel
-         * guide recommends for older PDO_PGSQL drivers.
-         *
-         * Dropping "-pooler" above gives up PgBouncer connection pooling, which
-         * is an optimisation rather than a requirement.
-         */
-        // Also exported for NeonPostgresConnector, which covers the pooled case
-        // should the pooler host come back.
-        scrutium_putenv('PGOPTIONS', 'endpoint='.$endpoint);
-        scrutium_putenv('DB_NEON_ENDPOINT', $endpoint);
-    }
-
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
-
-    /*
-     * A Neon password carries the "endpoint=<id>$" prefix, and the "=" and "$"
-     * separators must reach libpq verbatim. They cannot travel inside the
-     * connection URL: every layer that handles a URL percent-encodes the
-     * password, which turns them into "%3D" and "%24" and PostgreSQL then
-     * rejects the connection with "invalid command-line argument for server
-     * process".
-     *
-     * So the password is removed from the URL entirely and handed to the
-     * application through the environment instead. config/database.php already
-     * reads DB_PASSWORD, and because the URL no longer carries a password
-     * component, nothing re-encodes or overrides it.
-     */
-    if ($endpoint !== null) {
-        /*
-         * The password may live in the URL or in DB_PASSWORD already, and Neon
-         * credentials are sometimes supplied split across both. Prefer the one
-         * that is actually populated, and never discard an existing
-         * DB_PASSWORD by overwriting it with an empty one.
-         */
-        $existing = getenv('DB_PASSWORD');
-        $secret = $password !== ''
-            ? $password
-            : (is_string($existing) ? $existing : '');
-
-        if (! str_starts_with($secret, 'endpoint=')) {
-            $secret = 'endpoint='.$endpoint.'$'.$secret;
-        }
-
-        scrutium_putenv('DB_PASSWORD', $secret);
-        $password = '';
-    }
-
-    $password = rawurlencode($password);
-
-    /*
-     * The colon must be omitted along with the password, not left dangling.
-     * "user:@host" parses with an empty "pass" component, and Laravel merges the
-     * URL's parts *over* the connection config, so that empty string overwrites
-     * the DB_PASSWORD set above and the driver is handed no password at all:
-     *   SQLSTATE[08006] fe_sendauth: no password supplied
-     */
-    $auth = $password === '' ? $user : $user.':'.$password;
+    $password = rawurlencode(urldecode((string) ($parts['pass'] ?? '')));
+    $auth = $user.':'.$password;
     $port = isset($parts['port']) ? ':'.$parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';
 

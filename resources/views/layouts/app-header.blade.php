@@ -116,20 +116,6 @@
                     </svg>
                 </button>
 
-                <!-- How it works / product tour -->
-                <a
-                    href="{{ route('how-it-works') }}"
-                    class="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
-                    title="How it works"
-                    aria-label="How it works"
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path
-                            d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"
-                            stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
-                    </svg>
-                </a>
-
                 <!-- Notification Dropdown -->
                 <x-header.notification-dropdown />
             </div>

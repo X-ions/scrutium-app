@@ -15,9 +15,9 @@ resources/
 ├── css/
 │   └── app.css               # Tailwind CSS v4 theme (@theme), global utilities & 3rd party overrides
 ├── js/
-│   ├── app.js                # Main JS entry point (Alpine.js, data-provider registrations)
+│   ├── app.js                # Main JS entry point (Alpine.js, component dynamic imports)
 │   ├── bootstrap.js          # Axios & HTTP setup
-│   └── components/           # Alpine data providers (tour.js)
+│   └── components/           # (removed — chart/calendar/map modules were TailAdmin-only)
 └── views/
     ├── components/           # Reusable Blade components
     │   ├── common/           # Shared page elements (page-breadcrumb, flash-messages, common-grid-shape)
@@ -26,6 +26,7 @@ resources/
     └── pages/                # Route view templates (dashboard/, auth/, errors/, profile.blade.php, scrutium/)
 routes/
 ├── web.php                   # Web application routes
+├── api.php                   # API routes
 └── console.php               # Console commands
 ```
 
@@ -57,7 +58,7 @@ routes/
   - Shared wrapper: `resources/views/components/common/<component-name>.blade.php`.
   - Always use `@props([...])` to declare default values and expected component properties.
 - **Icons**:
-  - Navigation icons are inline SVG strings in the `$icons` map in `app/Helpers/MenuHelper.php`, rendered by `MenuHelper::getIconSvg()`. There is no `components/svg/` directory; add a new key there when a nav item needs one.
+  - Drop reusable SVGs in `resources/views/components/svg/<icon-name>.blade.php` and invoke via `<x-svg.icon-name />`.
   - For inline SVG icons in components, always use `fill-current` / `stroke-current` and size with `w-*` / `h-*` tokens.
 - **Layout Structure**:
   - Dashboard pages: Wrapped in `@extends('layouts.app')` with `<x-common.page-breadcrumb>` at the top and content sections inside a `<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">` wrapper.
@@ -99,7 +100,7 @@ routes/
   - Dark mode is class-driven (`.dark` on `<html>`).
   - Every styled element must include its corresponding `dark:` variant (e.g. `bg-white dark:bg-gray-800 text-gray-800 dark:text-white/90 border-gray-200 dark:border-gray-800`).
 - **Reusable Utility Classes**:
-  - Check `resources/css/app.css` before writing custom styles (`custom-scrollbar`, `no-scrollbar`, `menu-item*`). Prefer a Tailwind utility or an `@utility` block over a bespoke selector.
+  - Check `resources/css/app.css` before writing custom styles (`custom-scrollbar`, `no-scrollbar`, `menu-item-*`, `menu-dropdown-*`, `input-placeholder-*`).
   - There are no third-party library overrides any more; the demo libraries were removed. Prefer a Tailwind utility or an `@utility` block over a bespoke selector.
 - **No Hardcoded Hex**: Never hardcode hex colors directly in Blade `class=""` attributes. Use Tailwind theme tokens.
 
@@ -118,10 +119,6 @@ routes/
 ## Don'ts
 
 - Don't install new Composer packages or NPM dependencies without asking the user.
-- Run `php artisan view:clear` before measuring the built CSS size. `app.css` has a
-  `@source '../../storage/framework/views/*.php'` directive so Tailwind also scans *compiled* Blade
-  caches, which means a stale view cache silently re-emits utilities for classes that no longer exist
-  in source and inflates the bundle by a few kB. CI builds from a clean checkout, so it is unaffected.
 - Don't hardcode physical directional utilities (`ml-*`, `mr-*`, `pl-*`, `pr-*`, `left-*`, `right-*`, `border-l-*`, `border-r-*`, `rounded-l-*`, `rounded-r-*`, `text-left`, `text-right`) without providing proper RTL support (`ltr:` / `rtl:` or CSS logical equivalents).
 - Don't create a `tailwind.config.js` file — Tailwind v4 configuration belongs in `resources/css/app.css`.
 - Don't hardcode user-facing strings in Blade files without adding corresponding keys to `lang/<locale>.json`.

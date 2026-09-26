@@ -163,18 +163,6 @@
 
     </div>
 
-    {{-- Product tour overlay. Rendered once per page; the header button and the
-         "Play the tour" button both trigger it via a window event. --}}
-    @php
-        $tour = \App\Support\Tour::for(auth()->user());
-    @endphp
-    <x-common.tour
-        :steps="$tour['steps']"
-        :storage-key="$tour['storage_key']"
-        :current-route="\App\Support\Tour::currentRoute()"
-        :auto-start="\App\Support\Tour::shouldAutoStart()"
-    />
-
 </body>
 
 @stack('scripts')

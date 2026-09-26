@@ -23,7 +23,6 @@ class Integration extends Model
         'credentials',
         'auto_verify',
         'last_synced_at',
-        'last_checked_at',
         'last_error',
     ];
 
@@ -39,7 +38,6 @@ class Integration extends Model
             'credentials' => 'encrypted:array',
             'auto_verify' => 'boolean',
             'last_synced_at' => 'datetime',
-            'last_checked_at' => 'datetime',
         ];
     }
 
@@ -59,7 +57,7 @@ class Integration extends Model
     {
         $this->status = IntegrationStatus::Connected;
         $this->last_error = null;
-        $this->last_checked_at = now();
+        $this->last_synced_at = now();
         $this->save();
 
         return $this;
@@ -69,7 +67,6 @@ class Integration extends Model
     {
         $this->status = IntegrationStatus::Degraded;
         $this->last_error = $error;
-        $this->last_checked_at = now();
         $this->save();
 
         return $this;
@@ -79,7 +76,6 @@ class Integration extends Model
     {
         $this->status = IntegrationStatus::Disconnected;
         $this->last_error = $error;
-        $this->credentials = null;
         $this->save();
 
         return $this;

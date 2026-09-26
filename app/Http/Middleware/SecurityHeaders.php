@@ -29,17 +29,6 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), geolocation=(), microphone=()');
 
-        // Every response from this app is per-user: it carries a CSRF token, a
-        // flash message and session state. Without an explicit directive the
-        // Vercel PHP runtime re-labels the page `public, max-age=0,
-        // must-revalidate`, which makes it eligible for the shared edge cache —
-        // and a cached response drops Set-Cookie, so the browser never receives
-        // the session cookie and every POST (sign-in included) fails with a 419.
-        // Being explicit keeps the page out of shared caches and is simply the
-        // correct policy for an authenticated app.
-        $response->headers->set('Cache-Control', 'no-store, no-cache, private, must-revalidate');
-        $response->headers->set('Vary', 'Cookie');
-
         // 'unsafe-eval' stays in script-src because Alpine v3 evaluates x-data,
         // x-on:, :class and friends through new Function(). It must only be dropped
         // together with a switch to the @alpinejs/csp build plus full browser QA.
