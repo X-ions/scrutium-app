@@ -104,7 +104,7 @@ class ProductionOutputSafetyTest extends TestCase
         return $callable;
     }
 
-    public function test_a_neon_pooler_url_does_not_put_options_in_the_url(): void
+    public function test_a_neon_pooler_url_is_rewritten_to_the_direct_endpoint(): void
     {
         $prepare = $this->neonUrlHelper();
 
@@ -112,16 +112,32 @@ class ProductionOutputSafetyTest extends TestCase
             'postgresql://user:pass@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb?sslmode=require'
         );
 
+        $host = parse_url($result, PHP_URL_HOST);
+
+        // The direct endpoint needs no ?options=endpoint parameter, which is the
+        // only way this survives Laravel's config parsing and PDO option map.
+        $this->assertStringNotContainsString(
+            '-pooler',
+            (string) $host,
+            "The pooler host must be rewritten to the direct endpoint. Got: {$result}"
+        );
+        $this->assertStringStartsWith('ep-spring-forest-b7uollmz.', (string) $host);
+        $this->assertStringEndsWith('.c-13.us-east-1.aws.neon.tech', (string) $host);
+
         parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
 
-        // A URL-level "options" would be fed to Connector::getOptions(), which
-        // calls array_diff_key() on it and fails because it expects a PDO
-        // option map, not a libpq parameter string.
         $this->assertArrayNotHasKey('options', $query, 'libpq options must not travel in the connection URL.');
-
-        // The existing hardening must survive.
         $this->assertSame('require', $query['sslmode']);
         $this->assertSame('disable', $query['channel_binding']);
+    }
+
+    public function test_a_non_neon_url_is_left_alone(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $result = $prepare('postgres://user:pass@db.example.com:5432/app');
+
+        $this->assertSame('db.example.com', parse_url($result, PHP_URL_HOST));
     }
 
     public function test_the_connector_puts_the_endpoint_in_the_dsn(): void

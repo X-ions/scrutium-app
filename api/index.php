@@ -184,19 +184,22 @@ function scrutium_prepare_database_url(string $url): string
     // channel_binding=require breaks PHP PDO pgsql on Vercel/Neon
     $query['channel_binding'] = 'disable';
 
-    // Connecting to a Neon *pooler* host requires the endpoint id as well,
-    // because the pooler terminates TLS using SNI and the endpoint is not
-    // derivable from the pooler hostname. Without it the driver fails with
-    // SQLSTATE[08006] "Endpoint ID is not specified" — which broke every
-    // session read, so no visitor ever got a session cookie and every form
-    // post came back as a 419.
+    // Neon pooled endpoints (ep-*-pooler.<region>.aws.neon.tech) terminate TLS
+    // with SNI, so libpq must be told which endpoint it is reaching:
+    //   SQLSTATE[08006] "Endpoint ID is not specified"
+    // That parameter only survives if it reaches libpq intact, which means
+    // surviving Laravel's config parsing, the DSN builder and PDO's option map.
     //
-    // It is passed as its own variable rather than inside the URL: this is a
-    // libpq parameter string, and Laravel feeds a URL's "options" straight into
-    // Connector::getOptions(), which expects a PDO option map and throws
-    // "array_diff_key(): Argument #2 must be of type array" on a string.
-    // App\Database\Connectors\NeonPostgresConnector puts it in the DSN.
+    // Rather than depend on all of that, talk to the endpoint directly: drop
+    // the "-pooler" label and the connection needs no extra parameter at all.
+    // The direct and pooled URLs share credentials, so this is a host rewrite
+    // and nothing else. The cost is losing PgBouncer's connection pooling,
+    // which is an optimisation, not a requirement.
     if ($endpoint !== null) {
+        $host = $endpoint.'.'.preg_replace('/^[^.]+\./', '', $host);
+
+        // Still exported for NeonPostgresConnector, which handles the pooled
+        // case if the pooler host comes back.
         scrutium_putenv('DB_NEON_ENDPOINT', $endpoint);
     }
 
