@@ -90,8 +90,9 @@ class AuthController extends Controller
                     'name' => 'Default creator score',
                     'description' => 'Balanced starting weights for creator evaluation.',
                     'weights' => ScoreConfig::DEFAULT_WEIGHTS,
+                    'is_default' => true,
+                    'tenant_id' => $tenant->id,
                 ]);
-                $scoreConfig->is_default = true;
                 $scoreConfig->save();
 
                 AlertSubscription::create([
