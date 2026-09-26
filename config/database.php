@@ -7,7 +7,17 @@ $pgsqlOptions = [
     PDO::ATTR_PERSISTENT => false,
 ];
 
-if (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
+/*
+| PDO::PGSQL_ATTR_DISABLE_PREPARES is deprecated as of PHP 8.5 in favour of
+| Pdo\Pgsql::ATTR_DISABLE_PREPARES. Merely naming the old constant raises a
+| deprecation notice, and with display_errors on that notice is printed before
+| the response headers are emitted — PHP then refuses to send Set-Cookie, the
+| browser gets no session, and every POST fails with a 419. Resolve whichever
+| constant this runtime provides, and never reference the deprecated one.
+*/
+if (defined('Pdo\Pgsql::ATTR_DISABLE_PREPARES')) {
+    $pgsqlOptions[constant('Pdo\Pgsql::ATTR_DISABLE_PREPARES')] = true;
+} elseif (defined('PDO::PGSQL_ATTR_DISABLE_PREPARES')) {
     $pgsqlOptions[PDO::PGSQL_ATTR_DISABLE_PREPARES] = true;
 }
 

@@ -4,9 +4,21 @@
  * Vercel serverless entrypoint for Laravel (vercel-php).
  * Must run before public/index.php so cache/storage paths are writable.
  */
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+/*
+| Errors are logged, never printed. Two reasons:
+|
+| 1. Correctness. Emitting *any* output before the response headers are sent
+|    makes PHP discard them, including Set-Cookie. A stray deprecation notice
+|    was therefore costing every visitor their session and turning every form
+|    post into a 419.
+| 2. Security. display_errors leaks absolute paths, SQL and stack frames.
+|
+| Laravel's own handler and the stderr log channel report failures.
+*/
 error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+ini_set('log_errors', '1');
 
 $tmp = '/tmp/scrutium';
 $dirs = [
