@@ -3,7 +3,6 @@
   "version": 2,
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "outputDirectory": "public",
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.9.0",
@@ -11,18 +10,6 @@
     }
   },
   "routes": [
-    {
-      "src": "/build/(.*)",
-      "dest": "/public/build/$1"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/public/favicon.ico"
-    },
-    {
-      "src": "/(.*\\.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|map|webp))",
-      "dest": "/public/$1"
-    },
     {
       "src": "/(.*)",
       "dest": "/api/index.php"
