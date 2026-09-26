@@ -6,7 +6,7 @@
   "outputDirectory": "public",
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.4",
+      "runtime": "vercel-php@0.9.0",
       "includeFiles": "{app/**,bootstrap/**,config/**,database/**,public/**,resources/**,routes/**,storage/**,vendor/**,api/**}"
     }
   },
