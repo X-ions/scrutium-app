@@ -1,4 +1,4 @@
-<?php
+?<?php
 
 /*
 |--------------------------------------------------------------------------
@@ -12,7 +12,6 @@
 |
 | Step keys:
 |   id        stable identifier, also used as the highlight label
-|   icon      emoji shown in the step bubble
 |   title     short headline
 |   body      the explanation, one or two sentences
 |   tip       optional "handy to know" footnote
@@ -31,7 +30,6 @@ return [
 
         [
             'id' => 'welcome',
-            'icon' => '👋',
             'title' => 'Let us show you around',
             'body' => 'Scrutium tracks an influencer campaign from the first brief to the final invoice. '
                 .'This tour covers the handful of things worth knowing before you dive in.',
@@ -44,7 +42,6 @@ return [
 
         [
             'id' => 'workspace',
-            'icon' => '🏢',
             'title' => 'Everything lives in one workspace',
             'body' => 'Your workspace is the top-level container. Campaigns, creators, deliverables and '
                 .'reports are all scoped to it, so you only ever see your own team\'s data — never another '
@@ -58,7 +55,6 @@ return [
 
         [
             'id' => 'campaigns',
-            'icon' => '🎯',
             'title' => 'A campaign has two dials',
             'body' => 'Stage tracks where the work is — Brief, Casting, Live, Reconcile, Completed. '
                 .'Status tracks the commercial reality — Draft, Active, Paused, Completed or Cancelled.',
@@ -71,7 +67,6 @@ return [
 
         [
             'id' => 'roster',
-            'icon' => '✅',
             'title' => 'Only vetted creators can be booked',
             'body' => 'Creators sit in a sourcing pipeline you move them through. Only a Vetted creator '
                 .'shows up in a campaign\'s roster picker, so vetting is the gate that keeps sloppy '
@@ -85,7 +80,6 @@ return [
 
         [
             'id' => 'deliverables',
-            'icon' => '📦',
             'title' => 'A deliverable is one contracted unit',
             'body' => 'One creator, one campaign, one owed piece of work — a Post, Story, Reel, Video, '
                 .'Blog or Podcast. It carries a contracted unit count, an optional fee and an optional '
@@ -99,7 +93,6 @@ return [
 
         [
             'id' => 'lifecycle',
-            'icon' => '🔁',
             'title' => 'Pending, then Submitted, then a verdict',
             'body' => 'A deliverable starts Pending. The creator submits it, which moves it to Submitted. '
                 .'From there you either Approve it or Reject it with a reason — those two are final.',
@@ -112,7 +105,6 @@ return [
 
         [
             'id' => 'evidence',
-            'icon' => '🔒',
             'title' => 'Evidence is not optional',
             'body' => 'To move a deliverable to Submitted you must attach proof of delivery: an uploaded '
                 .'file (JPG, PNG, PDF or MP4, up to 10 MB) or a link. A deliverable with no evidence '
@@ -126,11 +118,10 @@ return [
 
         [
             'id' => 'verification',
-            'icon' => '⚖️',
             'title' => 'Approving moves real numbers',
             'body' => 'Approving credits at least the contracted units, stamps who verified it, and '
                 .'recalculates the campaign\'s spend from the fees of every approved deliverable.',
-            'tip' => 'Every approval, submission and rejection is written to the deliverable\'s audit trail.',
+            'tip' => 'Submitted evidence and the rejection reason stay on the deliverable page, so nothing gets lost after a hand-off.',
             'route' => 'deliverables',
             'target' => null,
             'cta' => 'Go verify',
@@ -139,7 +130,6 @@ return [
 
         [
             'id' => 'content',
-            'icon' => '🛡️',
             'title' => 'Content is checked, not trusted',
             'body' => 'Synced posts are screened for missing disclosure, missing captions and a low '
                 .'provenance score. Anything that trips a rule is flagged for review.',
@@ -152,7 +142,6 @@ return [
 
         [
             'id' => 'scoring',
-            'icon' => '🎛️',
             'title' => 'Pulse score is five dials you control',
             'body' => 'Every creator is scored on engagement rate, audience quality, content relevance, '
                 .'reliability and cost efficiency. The weights must total 1.0 — change them, then recalculate.',
@@ -165,7 +154,6 @@ return [
 
         [
             'id' => 'performance',
-            'icon' => '📈',
             'title' => 'Performance, not vanity',
             'body' => 'Approved spend, reach, engagements and CPE, either for one campaign or across the '
                 .'whole workspace. Pick a campaign from the dropdown to scope the numbers.',
@@ -177,7 +165,6 @@ return [
 
         [
             'id' => 'reports',
-            'icon' => '🧊',
             'title' => 'Reports freeze a moment in time',
             'body' => 'Generating a report snapshots the current campaign and deliverable state and freezes '
                 .'it immediately. Download it later as a JSON snapshot — frozen reports do not drift.',
@@ -190,7 +177,6 @@ return [
 
         [
             'id' => 'alerts',
-            'icon' => '🚨',
             'title' => 'Triage, then resolve',
             'body' => 'Alerts arrive ordered by severity so the Critical ones surface first. Acknowledge '
                 .'to claim one, resolve to close it. Your own notification subscriptions are on the '
@@ -204,7 +190,6 @@ return [
 
         [
             'id' => 'integrations',
-            'icon' => '🔌',
             'title' => 'Connect the platforms you brief on',
             'body' => 'Save a provider with its access token first, then connect it. One connection per '
                 .'provider per workspace.',
@@ -217,7 +202,6 @@ return [
 
         [
             'id' => 'roles',
-            'icon' => '🎭',
             'title' => 'Your role decides what you can change',
             'body' => 'Owner and Admin can do everything, including Settings. Manager can run the whole '
                 .'campaign loop but not administer the workspace. Analyst and Viewer are read-only.',
@@ -230,7 +214,6 @@ return [
 
         [
             'id' => 'settings',
-            'icon' => '🔐',
             'title' => 'Workspace settings',
             'body' => 'Rename the workspace, pick a currency, manage members and their roles, and create '
                 .'default notification subscriptions.',
@@ -243,7 +226,6 @@ return [
 
         [
             'id' => 'finish',
-            'icon' => '🎉',
             'title' => 'That is the whole loop',
             'body' => 'Brief a campaign, staff it with vetted creators, track deliverables through '
                 .'verification, then read the outcome in performance, reports and alerts.',

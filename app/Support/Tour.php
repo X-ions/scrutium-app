@@ -40,7 +40,6 @@ class Tour
 
             $steps[] = [
                 'id' => $step['id'],
-                'icon' => $step['icon'] ?? '✨',
                 'title' => $step['title'],
                 'body' => $step['body'],
                 'tip' => $step['tip'] ?? null,

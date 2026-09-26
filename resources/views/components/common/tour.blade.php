@@ -50,21 +50,14 @@
 
                 <div class="p-5 sm:p-6">
                     <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <span
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xl dark:bg-brand-500/10"
-                                aria-hidden="true"
-                                x-text="step?.icon"
-                            ></span>
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400"
-                                   x-text="`Step ${index + 1} of ${total}`"
-                                ></p>
-                                <h2 id="scrutium-tour-title"
-                                    class="text-base font-semibold text-gray-900 dark:text-white/90"
-                                    x-text="step?.title"
-                                ></h2>
-                            </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-brand-600 dark:text-brand-400"
+                               x-text="`Step ${index + 1} of ${total}`"
+                            ></p>
+                            <h2 id="scrutium-tour-title"
+                                class="mt-0.5 text-base font-semibold text-gray-900 dark:text-white/90"
+                                x-text="step?.title"
+                            ></h2>
                         </div>
 
                         <button
@@ -82,10 +75,13 @@
                     <p class="mt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-300" x-text="step?.body"></p>
 
                     <template x-if="step?.tip">
-                        <p class="mt-3 flex gap-2 rounded-lg bg-gray-50 p-3 text-xs leading-relaxed text-gray-600 dark:bg-white/[0.03] dark:text-gray-400">
-                            <span aria-hidden="true">💡</span>
+                        <div class="mt-3 flex gap-2 rounded-lg bg-gray-50 p-3 text-xs leading-relaxed text-gray-600 dark:bg-white/[0.03] dark:text-gray-400">
+                            <svg class="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.6" />
+                                <path d="M12 11v5.5M12 7.75v.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                            </svg>
                             <span x-text="step?.tip"></span>
-                        </p>
+                        </div>
                     </template>
 
                     <template x-if="targetMissing">

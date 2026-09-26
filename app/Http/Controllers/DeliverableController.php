@@ -34,7 +34,10 @@ class DeliverableController extends Controller
         abort_unless($deliverable->tenant_id === auth()->user()->tenant_id, 404);
         $deliverable->load(['campaign', 'influencer', 'verifier', 'contentPost', 'auditEvents.user']);
 
-        return view('pages.scrutium.deliverables.show', compact('deliverable') + ['title' => $deliverable->title]);
+        return view('pages.scrutium.deliverables.show', compact('deliverable') + [
+            'title' => $deliverable->title,
+            'evidence' => $deliverable->evidenceForDisplay(),
+        ]);
     }
 
     public function submit(Request $request, Deliverable $deliverable): RedirectResponse

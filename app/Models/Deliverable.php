@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class Deliverable extends Model
 {
@@ -167,6 +169,46 @@ class Deliverable extends Model
             'note' => $note,
             'meta' => $meta !== [] ? $meta : null,
         ]);
+    }
+
+    /**
+     * Resolve the stored proof of delivery into something displayable.
+     *
+     * `evidence_path` holds one of two things: an external URL captured from
+     * the `evidence_url` field, or a path on the configured evidence disk from
+     * an uploaded file. Both were previously invisible in the UI, so a creator
+     * could submit proof and never see it again.
+     *
+     * @return array{status: 'none'|'external'|'file'|'unavailable', url: ?string, name: ?string}
+     */
+    public function evidenceForDisplay(): array
+    {
+        $path = $this->evidence_path;
+
+        if (blank($path)) {
+            return ['status' => 'none', 'url' => null, 'name' => null];
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return ['status' => 'external', 'url' => $path, 'name' => null];
+        }
+
+        $disk = config('filesystems.evidence_disk', config('filesystems.default', 'public'));
+
+        try {
+            $exists = Storage::disk($disk)->exists($path);
+            $url = $exists ? Storage::disk($disk)->url($path) : null;
+        } catch (Throwable) {
+            // Some drivers (e.g. `local`) cannot produce a URL at all.
+            $exists = false;
+            $url = null;
+        }
+
+        return [
+            'status' => $url !== null ? 'file' : 'unavailable',
+            'url' => $url,
+            'name' => basename($path),
+        ];
     }
 
     public function scopeOutstanding(Builder $query): Builder

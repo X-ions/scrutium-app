@@ -18,8 +18,8 @@ Legend: `[ ]` todo · `[~]` implemented, awaiting verification · `[x]` implemen
 Last run locally on PHP 8.3.8 / Laravel 12.69.2 / Node 22.
 
 - [x] `php artisan migrate:fresh --seed` — all 14 migrations plus `ScrutiumDemoSeeder` complete cleanly
-- [x] `php artisan test` — 42 tests, 263 assertions, all passing
-- [x] `vendor/bin/pint --test` — PASS on 115 files
+- [x] `php artisan test` — 52 tests, 287 assertions, all passing
+- [x] `vendor/bin/pint --test` — PASS on 116 files
 - [x] `npm run lint` (Biome) — PASS, 0 findings
 - [x] `npm run build` — succeeds; **CSS 56 kB, JS 84 kB** (was 152 kB / 1265 kB)
 - [x] `composer audit` — **no security vulnerability advisories found**
@@ -61,11 +61,14 @@ Last run locally on PHP 8.3.8 / Laravel 12.69.2 / Node 22.
       leaving `evidence_path` null, and `approve()` refuses rows without evidence — so the demo
       worklist looked full but every "Submitted" row dead-ended on a 422. The seeder now writes a
       plausible evidence path.
-- [ ] **Evidence and rejection reasons are still never displayed.** `evidence_path` and
-      `rejection_reason` appear nowhere in any view, so a user who submits a file never sees it again
-      and never sees why something was rejected. The tour deliberately does not claim otherwise.
-      Worth fixing: render the stored evidence as a link and the rejection reason on
-      `deliverables/show`.
+- [x] **Submitted evidence and rejection reasons were never displayed.** `evidence_path` and
+      `rejection_reason` appeared nowhere in any view, so a creator who submitted a file never saw it
+      again and nobody could see why something was rejected. `Deliverable::evidenceForDisplay()` now
+      resolves the value — external URL, stored file, or honestly reports it as unavailable rather
+      than emitting a dead link — and the deliverable page renders it alongside the rejection reason,
+      which also appears on the relevant audit event. 10 tests cover the four evidence states.
+- [x] Emoji removed from the tour and guide. Steps are identified by number and inline SVG rather
+      than emoji bubbles.
 
 ---
 
