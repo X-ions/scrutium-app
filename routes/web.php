@@ -20,25 +20,36 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
 Route::get('/health/db', function () {
+    $diagnostics = [
+        'driver' => config('database.default'),
+        'pdo_pgsql' => extension_loaded('pdo_pgsql'),
+        'db_neon_endpoint_env' => getenv('DB_NEON_ENDPOINT') ?: null,
+        'configured_neon_endpoint' => config('database.connections.pgsql.neon_endpoint'),
+        'db_host' => config('database.connections.pgsql.host'),
+        'db_port' => config('database.connections.pgsql.port'),
+        'db_database' => config('database.connections.pgsql.database'),
+    ];
+
+    try {
+        $diagnostics['connector'] = get_class(app('db.factory')->createConnector(config('database.connections.pgsql')));
+    } catch (Throwable $e) {
+        $diagnostics['connector'] = 'unavailable: '.$e->getMessage();
+    }
+
     try {
         DB::select('select 1 as ok');
-
-        return response()->json([
-            'ok' => true,
-            'driver' => config('database.default'),
-            'pdo_pgsql' => extension_loaded('pdo_pgsql'),
-            'tenants' => Schema::hasTable('tenants'),
-            'users' => Schema::hasTable('users'),
-        ]);
+        $diagnostics['ok'] = true;
+        $diagnostics['tenants'] = Schema::hasTable('tenants');
+        $diagnostics['users'] = Schema::hasTable('users');
     } catch (Throwable $e) {
         report($e);
 
-        return response()->json([
-            'ok' => false,
-            'driver' => config('database.default'),
-            'pdo_pgsql' => extension_loaded('pdo_pgsql'),
-        ], 500);
+        $diagnostics['ok'] = false;
+        $diagnostics['error'] = $e->getMessage();
     }
+
+    // Never let diagnostics themselves take the endpoint down.
+    return response()->json($diagnostics, $diagnostics['ok'] ? 200 : 500);
 });
 
 Route::middleware('guest')->group(function (): void {
