@@ -296,7 +296,6 @@ class ScrutiumDemoSeeder extends Seeder
         }
     }
 
-
     /**
      * @param  Collection<int, Influencer>  $influencers
      */
@@ -388,5 +387,4 @@ class ScrutiumDemoSeeder extends Seeder
             ]);
         }
     }
-
 }

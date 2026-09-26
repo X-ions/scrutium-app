@@ -50,7 +50,17 @@ class DeliverableController extends Controller
 
         $path = $data['evidence_url'] ?? null;
         if ($request->hasFile('evidence')) {
-            $path = $request->file('evidence')->store('deliverables/'.$deliverable->tenant_id, 'public');
+            $disk = config('filesystems.evidence_disk', 'public');
+
+            if (app()->environment('production') && ! in_array($disk, ['s3', 'r2'], true)) {
+                report('Deliverable evidence is being written to the "'.$disk.'" disk in production; '
+                    .'set EVIDENCE_DISK to a durable disk or uploads will be lost on the next cold start.');
+            }
+
+            $path = $request->file('evidence')->store(
+                'deliverables/'.$deliverable->tenant_id,
+                $disk
+            );
         }
 
         $deliverable->update(['delivered_units' => $data['delivered_units']]);
@@ -90,7 +100,7 @@ class DeliverableController extends Controller
         abort_if($deliverable->statusEnum() !== DeliverableStatus::Pending, 422, 'Only pending deliverables can be deleted.');
 
         if ($deliverable->evidence_path && str_starts_with($deliverable->evidence_path, 'deliverables/')) {
-            Storage::disk('public')->delete($deliverable->evidence_path);
+            Storage::disk(config('filesystems.evidence_disk', 'public'))->delete($deliverable->evidence_path);
         }
 
         $deliverable->delete();

@@ -92,7 +92,7 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="text-left text-xs uppercase tracking-wide text-gray-400">
+                    <thead class="text-start text-xs uppercase tracking-wide text-gray-400">
                         <tr>
                             <th class="pb-3 font-medium">Campaign</th>
                             <th class="pb-3 font-medium">Stage</th>

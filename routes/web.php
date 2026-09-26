@@ -30,11 +30,12 @@ Route::get('/health/db', function () {
             'users' => Schema::hasTable('users'),
         ]);
     } catch (Throwable $e) {
+        report($e);
+
         return response()->json([
             'ok' => false,
             'driver' => config('database.default'),
             'pdo_pgsql' => extension_loaded('pdo_pgsql'),
-            'error' => $e->getMessage(),
         ], 500);
     }
 });

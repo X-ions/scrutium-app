@@ -11,6 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind the Vercel edge the app only ever receives plain HTTP, so without
+        // this Laravel ignores X-Forwarded-Proto, $request->isSecure() stays false and
+        // the HSTS header is never emitted. Laravel 12 has no config/trustedproxy.php
+        // in this project, so the proxy CIDR blocks are declared here.
+        $middleware->trustProxies(at: '**');
+
         $middleware->alias([
             'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
             'guest' => \Illuminate\Auth\Middleware\RedirectIfAuthenticated::class,

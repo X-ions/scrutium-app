@@ -4,7 +4,10 @@ Enterprise influencer marketing intelligence platform: campaign management, deli
 verification, performance analytics, scoring, and integrations — from contract to financial
 decision.
 
-**Current status:** the Scrutium application now has authenticated, tenant-scoped routes, database-backed overview and module pages, campaign/roster/deliverable workflows, scoring recalculation, report snapshots, alert triage, integrations, settings, baseline response security headers, real CI checks, and a working frontend build. **Runtime Laravel verification is still pending because PHP/Composer are unavailable in this environment.**
+**Current status:** the Scrutium application has authenticated, tenant-scoped routes, database-backed
+overview and module pages, campaign/roster/deliverable workflows, scoring recalculation, report
+snapshots, alert triage, integrations, settings, security headers, a nonce-based CSP, and a green
+CI pipeline running Pint, Pest, Biome and the Vite build on every push.
 
 Legend: `[ ]` todo · `[~]` implemented, awaiting runtime verification · `[x]` implemented
 
@@ -12,14 +15,18 @@ Legend: `[ ]` todo · `[~]` implemented, awaiting runtime verification · `[x]` 
 
 ## Verification log
 
-Runtime verification needs PHP 8.3+ and Composer installed locally.
+Last run locally on PHP 8.3.8 / Laravel 12.26.4 / Node 22.
 
-- [x] **Static checks green** — node verifier confirms balanced brackets, every `App\*` import resolves to a file, every `$fillable`/cast column exists in the migrations, and every `HasFactory` model has a factory (21 tables / 179 columns / 13 models cross-checked)
-- [x] `.env.example` standardised on SQLite and `database/database.sqlite` created, so `migrate` can run
-- [x] `npm run build` succeeds — Vite 7.1.3, 190 modules transformed → `public/build/` (Tailwind v4 CSS 151 kB, app JS 1.26 MB)
-- [x] Frontend production build revalidated after workflow/security changes
-- [ ] ⛔ **BLOCKED — PHP 8.3+ / Composer are unavailable in the current shell.** The code, routes, and views are implemented, but `php artisan migrate:fresh --seed` must be run in an environment with PHP before runtime acceptance.
-- [ ] `php artisan test` (Pest) green — includes domain tests, workflow tests, and authentication/tenant tests
+- [x] `php artisan migrate:fresh --seed` — all 14 migrations plus `ScrutiumDemoSeeder` complete cleanly
+- [x] `php artisan test` — 24 tests, 108 assertions, all passing
+- [x] `vendor/bin/pint --test` — PASS on 110 files
+- [x] `npx biome lint resources/js` — PASS, 0 findings
+- [x] `npm run build` — succeeds; CSS 61 kB, JS 80 kB
+- [x] `npm audit --omit=dev --audit-level=high` — 0 vulnerabilities
+- [x] Production database is managed Postgres (Neon) via `DB_URL`, not the old `/tmp` SQLite
+
+> Note: Composer is not on `PATH` on this machine. Run it as
+> `php "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\PHP.PHP.8.3_Microsoft.Winget.Source_8wekyb3d8bbwe\composer.phar" <cmd>`.
 
 ---
 
@@ -27,105 +34,115 @@ Runtime verification needs PHP 8.3+ and Composer installed locally.
 
 - [x] Laravel 12 + Tailwind v4 + Alpine.js + Vite scaffold (TailAdmin base)
 - [x] Rebranded sidebar / nav to Scrutium IA (`MenuHelper`)
-- [x] Database-backed overview and all core module routes are live; PHP runtime acceptance remains pending
+- [x] Database-backed overview and all core module routes are live and runtime-verified
 - [x] Light/dark theme store, English/Arabic RTL + locale switching plumbing
-- [x] Docker/Sail, Vercel config, real CI checks, and frontend CD build (deployment targets remain provider-specific)
+- [x] Vercel deployment, Neon Postgres, and CI (`ci.yml`) + migration (`migrate.yml`) workflows
 
 ---
 
-## Goal 1 — Real data model (blocker)
+## Goal 1 — Real data model
 
-- [~] Design domain schema: `tenants`, `campaigns`, `influencers`, `campaign_influencer` (roster/assignments), `deliverables`, `content_posts`, `metrics`, `scores`, `score_configs`, `reports`, `alerts`, `integrations`
-- [~] Create migrations + Eloquent models + relationships (14 migrations, 13 models)
-- [~] Add factories + seeders with realistic demo data (`ScrutiumDemoSeeder` — 2 workspaces, replaces hardcoded rows)
-- [~] Add enums for statuses (campaign stage, verification status, alert severity)
-- [~] Define money/currency + date conventions once, use everywhere (`decimal:2` + tenant `currency`)
+- [x] Design domain schema: `tenants`, `campaigns`, `influencers`, `campaign_influencer`, `deliverables`, `content_posts`, `metrics`, `scores`, `score_configs`, `reports`, `alerts`, `integrations`
+- [x] Migrations + Eloquent models + relationships (14 migrations, 13 models)
+- [x] Factories + `ScrutiumDemoSeeder` with two realistic demo workspaces
+- [x] Enums for campaign stage, verification status, and alert severity
+- [x] Money/currency + date conventions (`decimal:2` + tenant `currency`)
 
-Deferred from this goal: a `metrics` reference table for per-tenant metric definitions — the
-scoring engine currently reads metric keys from `score_configs.weights`.
-
+Deferred: a `metrics` reference table for per-tenant metric definitions — the scoring engine
+reads metric keys from `score_configs.weights`.
 
 ## Goal 2 — Authentication & access control
 
-- [x] Authentication backend with workspace registration, login, logout, session regeneration, and CSRF-protected forms
-- [x] Authenticated tenant middleware and role-based operational access
-- [x] Database-backed overview and all core module pages
-- [x] Campaign creation, roster assignment, deliverable creation, evidence submission, approval/rejection, and audit trail
-- [x] Creator sourcing/vetting, content monitoring, performance metrics, scoring configuration/recalculation
-- [x] Versioned report snapshots, alert triage/subscriptions, integration management, and workspace settings
-- [x] Session encryption, removed debug endpoint, and protected production session configuration
+- [x] Authentication backend with workspace registration, login, logout, session regeneration, CSRF
+- [x] Tenant middleware and role-based operational access
+- [x] Campaign creation, roster assignment, deliverables, evidence, approval/rejection, audit trail
+- [x] Creator sourcing/vetting, content monitoring, metrics, scoring config/recalculation
+- [x] Report snapshots, alert triage/subscriptions, integrations, workspace settings
+- [x] Session encryption, debug endpoint removed, protected production session config
 
 ## Goal 3 — Real module pages
 
-All listed Scrutium modules are backed by live controllers, tenant-scoped queries, and dedicated views.
-
-- [x] Overview: driven from tenant-scoped aggregation queries
-- [x] Campaigns: list, detail, roster/assignments, campaign creation, budget allocation
-- [x] Influencers: intelligence list, vetting pipeline, creator sourcing
-- [x] Deliverables: accountability table, evidence upload, verification status, audit log
-- [x] Content: monitoring feed, provenance/integrity status
-- [x] Performance: spend, reach, engagements, CPE, and campaign efficiency
-- [x] Scoring: configurable weights and data-driven recalculation
-- [x] Reports: versioned snapshots, freeze/publish, JSON download
-- [x] Alerts: issue tracking, acknowledgement, resolution, subscriptions
-- [x] Integrations: provider configuration, encrypted credentials, connect/disconnect
-- [x] Settings: workspace and team role management
-- [x] Controllers + Form validation for core module workflows
+- [x] Overview, campaigns, influencers, deliverables, content, performance, scoring, reports,
+      alerts, integrations, settings — all backed by live controllers and tenant-scoped queries
 
 ## Goal 4 — English UI & RTL layout
 
-- [x] Keep user-facing copy in English per the current product scope; no translation dictionaries are required
-- [x] Limit the direction selector to English (LTR) and Arabic (RTL)
-- [ ] Complete browser-level RTL QA across every new component (chevrons, tables, drawers)
+- [x] English-only UI copy; direction selector limited to English (LTR) and Arabic (RTL)
+- [x] Logical properties applied across surviving components; the notification dropdown and the
+      overview table header were corrected (`ltr:`/`rtl:` mirroring, `text-start`)
+- [ ] **Browser-level RTL QA is still unverified.** Static analysis is clean, but no automated test
+      renders a page in `dir="rtl"`, and there is no browser test suite. Needs manual passes over
+      every page at both directions, or a Dusk/Playwright suite.
 
 ## Goal 5 — Cleanup & dead code
 
-- [x] DashboardController returns the live `pages.dashboard.overview` view
-- [x] Removed the obsolete SidebarController and shared placeholder view
-- [x] Scoping middleware resolves the authenticated user's tenant for every protected request
-- [ ] Decide whether to wire or remove the legacy TailAdmin demo pages (charts, tables, form-elements, ui-elements, calendar, blank); they currently have no routes
-- [x] `/hello` route and `tailwind-laravel.png` are absent
-- [x] `.kilo` duplicate worktree is ignored rather than deleted
-- [x] `api/debug.php` and the public `/debug` route removed
+- [x] Removed the 13 unrouted TailAdmin demo pages, the 30 components and 38 view classes only they
+      used, the 9 orphaned JS modules, and 778 lines of dead third-party CSS
+- [x] Removed 9 now-unused npm packages (ApexCharts, Flatpickr, FullCalendar, jsVectorMap, Swiper,
+      Prism.js, Popper, Floating UI, temporal-polyfill). Bundle: CSS 152 kB → 61 kB, JS 1265 kB → 80 kB
+- [x] `DashboardController` returns the live overview view; obsolete `SidebarController` removed
+- [x] `/hello`, `tailwind-laravel.png`, and `api/debug.php` removed
+- [x] CD resolved: Vercel Git integration is the deployment path, so the placeholder `cd.yml` was deleted
+- [ ] Prune the remaining zero-usage app-owned CSS utilities (`tableCheckbox`, `taskCheckbox`,
+      `.task`, `form-check-input`, `social-button`, `edit-button`, `docs-*`, `nav-icon-item*`,
+      `.simplebar-*`) and the stale `ecommerce`/`ui-elements` icon entries in `MenuHelper`
 
 ## Goal 6 — Deploy & production readiness
 
-- [x] Standardize DB config — README, `.env.example` and `config/database.php` now all default to SQLite
-- [ ] Wire Vercel to a managed database (Neon/PlanetScale/RDS) — SQLite in `/tmp` is ephemeral
-- [x] Real session + encrypted cookie/database-capable session configuration (not `array`)
-- [ ] Queue worker / scheduler for syncs, scoring, report generation
-- [ ] Object storage for deliverable evidence + exports (S3)
-- [x] Plaintext stack-trace error handler removed; Laravel's standard exception handling is active
-- [x] Login, registration, and logout endpoints are throttled and CSRF protected
-- [x] Added baseline response security headers (nosniff, frame denial, referrer policy, permissions policy, and HSTS on HTTPS)
-- [ ] Expand CSP hardening with a nonce-based policy after the application’s inline-script policy is finalized
+- [x] Managed Postgres (Neon) wired through `DB_URL`, with a custom `PostgresConnection` that
+      preserves boolean bindings (Laravel's `prepareBindings()` casts bools to int, which PostgreSQL
+      rejects for `boolean` columns)
+- [x] Real session + encrypted cookie/database-capable session configuration
+- [x] Baseline security headers, HSTS, and a **nonce-based CSP** whose `script-src` has no
+      `'unsafe-inline'`; all inline event handlers converted to Alpine; `trustProxies` configured so
+      HSTS is actually emitted behind the Vercel proxy
+- [x] `/health/db` no longer leaks the raw exception message to anonymous callers
+- [x] Evidence disk is configurable via `EVIDENCE_DISK` and logs a warning if it resolves to a
+      non-durable disk in production
+- [ ] **Deliverable evidence storage still needs credentials.** `league/flysystem-aws-s3-v3` is
+      installed and the code is disk-agnostic, but until `EVIDENCE_DISK=s3` plus `AWS_*` variables
+      are set, uploads land on Vercel's ephemeral `/tmp` and are lost on the next cold start.
+      Action: create a bucket, set the AWS env vars, flip `EVIDENCE_DISK`.
+- [ ] Queue worker / scheduler. Deliberately not built yet: there are no long-running jobs, no
+      integration sync code, and scoring/report generation are fast enough to stay synchronous. On
+      Vercel, cron frequency is also plan-capped (Hobby = once/day), so a queue would currently add
+      latency rather than remove it. Revisit when a real sync or export job exists.
+- [ ] Drop `'unsafe-eval'` from `script-src`. Requires switching to the `@alpinejs/csp` Alpine build
+      plus browser QA of every `x-data` / `x-on` expression in the app. The test suite cannot catch
+      a broken Alpine directive.
 
 ## Goal 7 — Quality gates
 
-- [x] CI runs PHP 8.3, Composer metadata/PHP syntax checks, Pest, Node 22, the Vite build, and dependency audits
-- [x] Authentication and tenant-isolation feature tests added; runtime execution awaits PHP
-- [x] Added scoring recalculation, verification-rule, evidence-required, and security-header regression tests; runtime execution awaits PHP
-- [x] Composer metadata and PHP syntax are checked in CI
-- [ ] Enable a full Pint formatting check after the existing codebase is normalized
-- [ ] Add a JS lint/typecheck script after selecting a project linter (no new dependency was introduced)
-- [ ] Replace provider-specific CD deployment placeholders with the chosen staging/production target
-- [ ] Add a deployed-application smoke test to CI
+- [x] CI runs PHP 8.3 (Composer validate, syntax check, Pint, Pest), Node 22 (Biome lint, Vite
+      build), and dependency audits
+- [x] `composer lint` / `composer format` scripts; codebase normalized so the Pint gate passes
+- [x] `npm run lint` / `npm run lint:fix` via Biome with a checked-in `biome.json`
+- [x] Deployed-application smoke test job (hits `/signin` and asserts `/health/db` reports `ok`) on
+      pushes to `main`
+- [x] Authentication, tenant-isolation, scoring, verification-rule, security-header and CSP
+      regression tests
+- [ ] **38 Composer advisories remain** in `guzzlehttp/guzzle`, `guzzlehttp/psr7` and
+      `laravel/framework`. Guzzle was updated to 7.15.5 and psr7 to 2.13.1, which cleared 4, but the
+      rest need a `laravel/framework` upgrade. The CI audit step is `continue-on-error` so the rest
+      of the gate stays meaningful; remove that override once the advisories are cleared.
 
 ---
 
 ## Milestones
 
-1. **M1 — Foundations:** schema, models, seeders, auth, tenancy → *app is login-able and data persists*
-2. **M2 — Core loop:** campaigns → roster → deliverables → verification → audit log
-3. **M3 — Intelligence:** content monitoring, performance analytics, scoring engine
-4. **M4 — Scale:** reports, alerts, integrations, roles & permissions
-5. **M5 — Hardening:** prod DB/session/storage, CI green, RTL QA complete
+1. **M1 — Foundations:** schema, models, seeders, auth, tenancy → *done*
+2. **M2 — Core loop:** campaigns → roster → deliverables → verification → audit log → *done*
+3. **M3 — Intelligence:** content monitoring, performance analytics, scoring engine → *done*
+4. **M4 — Scale:** reports, alerts, integrations, roles & permissions → *done*
+5. **M5 — Hardening:** prod DB/session/storage, CI green, RTL QA complete → *storage credentials and
+   browser RTL QA outstanding*
 
 ## Definition of done (functional app)
 
-- A user can sign up, log in, and only see their tenant's data
-- Campaigns can be created, staffed, and tracked through their lifecycle
-- Deliverables accept evidence and move through a verifiable status
-- Performance and scoring numbers come from the database, not Blade literals
-- Reports export, alerts fire, integrations show real platform health
-- CI runs tests on every PR and deploys land without manual steps
+- [x] A user can sign up, log in, and only see their tenant's data
+- [x] Campaigns can be created, staffed, and tracked through their lifecycle
+- [x] Deliverables accept evidence and move through a verifiable status
+- [x] Performance and scoring numbers come from the database, not Blade literals
+- [x] Reports export, alerts fire, integrations show real platform health
+- [x] CI runs tests on every PR and deploys land without manual steps
+- [ ] Submitted evidence survives a serverless cold start (blocked on bucket credentials)

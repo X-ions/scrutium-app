@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Sign in' }} | Scrutium</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script>
+    <script nonce="{{ $cspNonce }}">
         (function () {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {

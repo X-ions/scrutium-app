@@ -17,6 +17,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Evidence Disk
+    |--------------------------------------------------------------------------
+    |
+    | Deliverable evidence must outlive a single serverless cold start, so it
+    | is pinned to a named disk rather than the default. Set EVIDENCE_DISK=s3
+    | together with the AWS_* variables in production; it falls back to
+    | "public" for local development.
+    |
+    */
+
+    'evidence_disk' => env('EVIDENCE_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

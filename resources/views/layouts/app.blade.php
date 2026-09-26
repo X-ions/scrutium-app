@@ -12,13 +12,13 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Theme Store -->
-    <style>
+    <style nonce="{{ $cspNonce }}">
         [x-cloak] {
             display: none !important;
         }
     </style>
     <!-- Theme Store -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         document.addEventListener('alpine:init', () => {
             Alpine.store('theme', {
                 init() {
@@ -116,7 +116,7 @@
     </script>
 
     <!-- Apply RTL and dark mode immediately to prevent flash -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         (function() {
             const savedDir = localStorage.getItem('dir');
             const savedLocale = localStorage.getItem('locale');

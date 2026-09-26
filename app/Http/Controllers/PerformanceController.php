@@ -31,7 +31,7 @@ class PerformanceController extends Controller
             ->withSum(['contentPosts as total_reach'], 'reach')
             ->orderBy('name')
             ->get()
-            ->map(function (Campaign $campaign) use ($spend, $reach): array {
+            ->map(function (Campaign $campaign) use ($reach): array {
                 $campaignSpend = (float) $campaign->approved_spend;
                 $campaignReach = (int) $campaign->total_reach;
 

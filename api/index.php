@@ -4,7 +4,6 @@
  * Vercel serverless entrypoint for Laravel (vercel-php).
  * Must run before public/index.php so cache/storage paths are writable.
  */
-
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
@@ -12,16 +11,16 @@ error_reporting(E_ALL);
 $tmp = '/tmp/scrutium';
 $dirs = [
     $tmp,
-    $tmp . '/views',
-    $tmp . '/storage',
-    $tmp . '/storage/app',
-    $tmp . '/storage/app/public',
-    $tmp . '/storage/framework',
-    $tmp . '/storage/framework/cache',
-    $tmp . '/storage/framework/cache/data',
-    $tmp . '/storage/framework/sessions',
-    $tmp . '/storage/framework/views',
-    $tmp . '/storage/logs',
+    $tmp.'/views',
+    $tmp.'/storage',
+    $tmp.'/storage/app',
+    $tmp.'/storage/app/public',
+    $tmp.'/storage/framework',
+    $tmp.'/storage/framework/cache',
+    $tmp.'/storage/framework/cache/data',
+    $tmp.'/storage/framework/sessions',
+    $tmp.'/storage/framework/views',
+    $tmp.'/storage/logs',
 ];
 foreach ($dirs as $dir) {
     if (! is_dir($dir)) {
@@ -30,11 +29,11 @@ foreach ($dirs as $dir) {
 }
 
 $forced = [
-    'APP_PACKAGES_CACHE' => $tmp . '/packages.php',
-    'APP_SERVICES_CACHE' => $tmp . '/services.php',
-    'APP_EVENTS_CACHE' => $tmp . '/events.php',
-    'VIEW_COMPILED_PATH' => $tmp . '/views',
-    'APP_STORAGE_PATH' => $tmp . '/storage',
+    'APP_PACKAGES_CACHE' => $tmp.'/packages.php',
+    'APP_SERVICES_CACHE' => $tmp.'/services.php',
+    'APP_EVENTS_CACHE' => $tmp.'/events.php',
+    'VIEW_COMPILED_PATH' => $tmp.'/views',
+    'APP_STORAGE_PATH' => $tmp.'/storage',
     'APP_MAINTENANCE_DRIVER' => 'file',
     'APP_MAINTENANCE_STORE' => 'array',
     'QUEUE_CONNECTION' => 'sync',
@@ -86,15 +85,15 @@ if (is_string($neonUrl) && $neonUrl !== '') {
     }
 } else {
     scrutium_putenv('DB_CONNECTION', getenv('DB_CONNECTION') ?: 'sqlite');
-    $dbPath = getenv('DB_DATABASE') ?: ($tmp . '/database.sqlite');
+    $dbPath = getenv('DB_DATABASE') ?: ($tmp.'/database.sqlite');
     scrutium_putenv('DB_DATABASE', $dbPath);
     if (! file_exists($dbPath)) {
         @touch($dbPath);
     }
 }
 
-if (! is_file($tmp . '/packages.php')) {
-    file_put_contents($tmp . '/packages.php', "<?php\nreturn array (\n);\n");
+if (! is_file($tmp.'/packages.php')) {
+    file_put_contents($tmp.'/packages.php', "<?php\nreturn array (\n);\n");
 }
 
 if (empty(getenv('APP_KEY'))) {
@@ -108,7 +107,7 @@ if (empty(getenv('APP_KEY'))) {
 }
 
 try {
-    require __DIR__ . '/../public/index.php';
+    require __DIR__.'/../public/index.php';
 } catch (Throwable $e) {
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
@@ -117,10 +116,10 @@ try {
     $i = 0;
     while ($current && $i < 5) {
         echo "--- Exception #{$i} ---\n";
-        echo $current::class . ': ' . $current->getMessage() . "\n";
-        echo $current->getFile() . ':' . $current->getLine() . "\n\n";
+        echo $current::class.': '.$current->getMessage()."\n";
+        echo $current->getFile().':'.$current->getLine()."\n\n";
         if ($i === 0) {
-            echo $current->getTraceAsString() . "\n\n";
+            echo $current->getTraceAsString()."\n\n";
         }
         $current = $current->getPrevious();
         $i++;
@@ -173,9 +172,9 @@ function scrutium_prepare_database_url(string $url): string
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
     $password = rawurlencode(urldecode((string) ($parts['pass'] ?? '')));
-    $auth = $user . ':' . $password;
-    $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+    $auth = $user.':'.$password;
+    $port = isset($parts['port']) ? ':'.$parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';
 
-    return 'postgres://' . $auth . '@' . $host . $port . $path . '?' . http_build_query($query);
+    return 'postgres://'.$auth.'@'.$host.$port.$path.'?'.http_build_query($query);
 }

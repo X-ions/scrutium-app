@@ -8,9 +8,12 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "build:watch": "vite build --watch"
+        "build:watch": "vite build --watch",
+        "lint": "biome lint resources/js",
+        "lint:fix": "biome lint --write resources/js"
     },
     "devDependencies": {
+        "@biomejs/biome": "^2.5.14",
         "@tailwindcss/vite": "^4.1.12",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
@@ -19,16 +22,7 @@
         "vite": "^7.0.4"
     },
     "dependencies": {
-        "@floating-ui/dom": "^1.7.4",
-        "@popperjs/core": "^2.11.8",
-        "alpinejs": "^3.14.9",
-        "apexcharts": "^7.0.0",
-        "flatpickr": "^4.6.13",
-        "fullcalendar": "^7.0.2",
-        "jsvectormap": "^1.7.0",
-        "prismjs": "^1.30.0",
-        "swiper": "^14.2.0",
-        "temporal-polyfill": "^1.0.4"
+        "alpinejs": "^3.14.9"
     },
     "version": "1.1.2"
 }

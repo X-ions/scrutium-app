@@ -17,18 +17,13 @@ resources/
 ├── js/
 │   ├── app.js                # Main JS entry point (Alpine.js, component dynamic imports)
 │   ├── bootstrap.js          # Axios & HTTP setup
-│   └── components/           # Client-side modules (calendar-init, charts, map)
+│   └── components/           # (removed — chart/calendar/map modules were TailAdmin-only)
 └── views/
-    ├── components/           # Reusable Blade components (<x-ui.*>, <x-form.*>, <x-common.*>, etc.)
-    │   ├── common/           # Shared page elements (page-breadcrumb, component-card, table-dropdown)
-    │   ├── ecommerce/        # Ecommerce dashboard widgets (metrics, monthly-target, recent-orders)
-    │   ├── form/             # Form controls (input, select, date-picker, dropzone)
-    │   ├── header/           # Header widgets (user-dropdown, notification-dropdown)
-    │   ├── profile/          # User profile cards (personal-info, profile-card, address-card)
-    │   ├── tables/           # Table variations (basic-tables-one to five)
-    │   └── ui/               # UI primitives (alert, avatar, badge, button, modal)
+    ├── components/           # Reusable Blade components
+    │   ├── common/           # Shared page elements (page-breadcrumb, flash-messages, common-grid-shape)
+    │   └── header/           # Header widgets (user-dropdown, notification-dropdown)
     ├── layouts/              # Master layouts (app.blade.php, fullscreen-layout.blade.php, sidebar.blade.php, app-header.blade.php)
-    └── pages/                # Route view templates (dashboard/, auth/, ui-elements/, form/, tables/, chart/, calender.blade.php)
+    └── pages/                # Route view templates (dashboard/, auth/, errors/, profile.blade.php, scrutium/)
 routes/
 ├── web.php                   # Web application routes
 ├── api.php                   # API routes
@@ -37,16 +32,18 @@ routes/
 
 ## Stack
 
-- **Laravel 12** with **PHP >= 8.2**.
+- **Laravel 12** with **PHP >= 8.3**.
 - **Blade Template Engine** using modular, component-driven architecture (`<x-component-name />`).
 - **Tailwind CSS v4** configured with `@tailwindcss/vite` and `@theme` tokens in `resources/css/app.css`.
 - **Alpine.js v3** for reactive UI interactions, toggles, dropdowns, and global store management (`Alpine.store('theme')`).
 - **Vite 7** with `laravel-vite-plugin` for lightning-fast asset compilation.
-- **Third-Party Libraries**: ApexCharts, FullCalendar, Swiper, Flatpickr, jsVectorMap, Leaflet, MapLibre GL, Prism.js.
+- **Third-Party Libraries**: none. The TailAdmin demo libraries (ApexCharts, FullCalendar, Swiper, Flatpickr, jsVectorMap, Prism.js) were removed with the demo pages they served; the app renders charts, calendars and tables with plain Blade + Tailwind.
 - Scripts:
   - `composer run dev` — runs `php artisan serve`, `npm run dev`, `php artisan pail` concurrently.
   - `npm run dev` / `npm run build` — Vite development and production asset bundling.
+  - `npm run lint` / `npm run lint:fix` — Biome lint for `resources/js`.
   - `composer test` — runs test suite via Pest PHP.
+  - `composer lint` / `composer format` — Pint style check / auto-fix for PHP.
 
 ## Conventions
 
@@ -64,7 +61,7 @@ routes/
   - Drop reusable SVGs in `resources/views/components/svg/<icon-name>.blade.php` and invoke via `<x-svg.icon-name />`.
   - For inline SVG icons in components, always use `fill-current` / `stroke-current` and size with `w-*` / `h-*` tokens.
 - **Layout Structure**:
-  - Dashboard pages: Wrapped in `@extends('layouts.app')` with `<x-common.page-breadcrumb>` at the top and content sections inside `<x-common.component-card>`.
+  - Dashboard pages: Wrapped in `@extends('layouts.app')` with `<x-common.page-breadcrumb>` at the top and content sections inside a `<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">` wrapper.
   - Full-width / Auth pages: Wrapped in `@extends('layouts.fullscreen-layout')`.
 - **State Management**:
   - Component-level state: Use `x-data="{ ... }"` in Alpine.js.
@@ -104,7 +101,7 @@ routes/
   - Every styled element must include its corresponding `dark:` variant (e.g. `bg-white dark:bg-gray-800 text-gray-800 dark:text-white/90 border-gray-200 dark:border-gray-800`).
 - **Reusable Utility Classes**:
   - Check `resources/css/app.css` before writing custom styles (`custom-scrollbar`, `no-scrollbar`, `menu-item-*`, `menu-dropdown-*`, `input-placeholder-*`).
-  - Third-party library overrides (ApexCharts, Flatpickr, FullCalendar, Swiper, SimpleBar) are maintained at the bottom of `resources/css/app.css`.
+  - There are no third-party library overrides any more; the demo libraries were removed. Prefer a Tailwind utility or an `@utility` block over a bespoke selector.
 - **No Hardcoded Hex**: Never hardcode hex colors directly in Blade `class=""` attributes. Use Tailwind theme tokens.
 
 ## Component & Interactive UI Rules
