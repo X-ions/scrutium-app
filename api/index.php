@@ -179,6 +179,8 @@ function scrutium_prepare_database_url(string $url): string
         $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
     }
 
+    $password = urldecode((string) ($parts['pass'] ?? ''));
+
     parse_str($parts['query'] ?? '', $query);
     $query['sslmode'] = $query['sslmode'] ?? 'require';
     // channel_binding=require breaks PHP PDO pgsql on Vercel/Neon
@@ -202,27 +204,35 @@ function scrutium_prepare_database_url(string $url): string
          * Neon enforces SNI, so every connection needs the endpoint id:
          *   SQLSTATE[08006] "Endpoint ID is not specified"
          *
-         * Passing it as `?options=endpoint%3D...` on the URL does not work:
-         * Laravel hands a URL's "options" to Connector::getOptions(), which
-         * expects a PDO option map and throws on a string. Injecting it into the
-         * DSN instead does not work either, because PDO_PGSQL only forwards a
-         * whitelist of connection keywords and silently drops the rest, so
-         * libpq never sees it.
+         * Three channels were tried and all fail with this runtime, because the
+         * bundled libpq has no SNI support and PDO_PGSQL only forwards a
+         * whitelist of DSN keywords:
          *
-         * PGOPTIONS is the one channel that reaches libpq untouched, because
-         * libpq reads it straight from the environment. Set it before the
-         * application boots and the connection succeeds regardless of what the
-         * PDO layer does with the DSN.
+         *   ?options=endpoint%3D... on the URL -> Laravel's Connector::getOptions()
+         *                                            expects a PDO option map and
+         *                                            throws "array_diff_key(): arg 2
+         *                                            must be of type array"
+         *   options=... inside the pgsql: DSN -> dropped by PDO_PGSQL before libpq
+         *   PGOPTIONS environment variable   -> not honoured by the bundled libpq
+         *
+         * Neon's documented workaround D is the channel that works: libpq parses
+         * connection parameters out of the password field, and PDO passes the
+         * password through untouched. This is the workaround Neon's own Laravel
+         * guide recommends for older PDO_PGSQL drivers.
+         *
+         * Dropping "-pooler" above gives up PgBouncer connection pooling, which
+         * is an optimisation rather than a requirement.
          */
-        scrutium_putenv('PGOPTIONS', 'endpoint='.$endpoint);
+        $password = 'endpoint='.$endpoint.'$'.$password;
 
         // Also exported for NeonPostgresConnector, which covers the pooled case
         // should the pooler host come back.
+        scrutium_putenv('PGOPTIONS', 'endpoint='.$endpoint);
         scrutium_putenv('DB_NEON_ENDPOINT', $endpoint);
     }
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
-    $password = rawurlencode(urldecode((string) ($parts['pass'] ?? '')));
+    $password = rawurlencode($password);
     $auth = $user.':'.$password;
     $port = isset($parts['port']) ? ':'.$parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';

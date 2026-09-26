@@ -154,6 +154,33 @@ class ProductionOutputSafetyTest extends TestCase
         $this->assertSame('ep-spring-forest-b7uollmz', getenv('DB_NEON_ENDPOINT'));
     }
 
+    public function test_the_endpoint_ride_s_in_the_password_as_neon_documents(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $result = $prepare(
+            'postgresql://user:s3cret@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb'
+        );
+
+        // Neon's workaround D: libpq parses connection parameters out of the
+        // password field, and PDO hands the password through untouched. This is
+        // the only channel that survives PDO_PGSQL's DSN keyword whitelist.
+        $this->assertSame(
+            'endpoint=ep-spring-forest-b7uollmz$s3cret',
+            rawurldecode((string) parse_url($result, PHP_URL_PASS)),
+            'The password must carry the endpoint id, or Neon rejects the connection with SQLSTATE[08006].'
+        );
+    }
+
+    public function test_a_non_neon_password_is_never_rewritten(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $result = $prepare('postgres://user:s3cret@db.example.com:5432/app');
+
+        $this->assertSame('s3cret', rawurldecode((string) parse_url($result, PHP_URL_PASS)));
+    }
+
     public function test_a_non_neon_url_is_left_alone(): void
     {
         $prepare = $this->neonUrlHelper();
