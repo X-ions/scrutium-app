@@ -110,20 +110,20 @@
         </div>
 
         <div class="space-y-2">
-            <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
+            <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-start text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
                 <span>Campaign tools</span>
             </a>
-            <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
+            <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-start text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
                 <span>Partner integrations</span>
             </a>
-            <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
+            <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-start text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
                 <span>Featured services</span>
             </a>
         </div>
 
         <a href="#" class="mt-3 inline-flex w-full items-center justify-between rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-400">
             <span>Explore</span>
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true" class="rtl:rotate-180">→</span>
         </a>
     </div>
 </aside>
