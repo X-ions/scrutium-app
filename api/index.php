@@ -198,8 +198,26 @@ function scrutium_prepare_database_url(string $url): string
     if ($endpoint !== null) {
         $host = $endpoint.'.'.preg_replace('/^[^.]+\./', '', $host);
 
-        // Still exported for NeonPostgresConnector, which handles the pooled
-        // case if the pooler host comes back.
+        /*
+         * Neon enforces SNI, so every connection needs the endpoint id:
+         *   SQLSTATE[08006] "Endpoint ID is not specified"
+         *
+         * Passing it as `?options=endpoint%3D...` on the URL does not work:
+         * Laravel hands a URL's "options" to Connector::getOptions(), which
+         * expects a PDO option map and throws on a string. Injecting it into the
+         * DSN instead does not work either, because PDO_PGSQL only forwards a
+         * whitelist of connection keywords and silently drops the rest, so
+         * libpq never sees it.
+         *
+         * PGOPTIONS is the one channel that reaches libpq untouched, because
+         * libpq reads it straight from the environment. Set it before the
+         * application boots and the connection succeeds regardless of what the
+         * PDO layer does with the DSN.
+         */
+        scrutium_putenv('PGOPTIONS', 'endpoint='.$endpoint);
+
+        // Also exported for NeonPostgresConnector, which covers the pooled case
+        // should the pooler host come back.
         scrutium_putenv('DB_NEON_ENDPOINT', $endpoint);
     }
 

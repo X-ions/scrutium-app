@@ -131,13 +131,41 @@ class ProductionOutputSafetyTest extends TestCase
         $this->assertSame('disable', $query['channel_binding']);
     }
 
+    public function test_the_endpoint_is_handed_to_libpq_via_pgoptions(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        putenv('PGOPTIONS');
+        $_ENV['PGOPTIONS'] = '';
+        $_SERVER['PGOPTIONS'] = '';
+
+        $prepare(
+            'postgresql://user:pass@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb?sslmode=require'
+        );
+
+        // PDO_PGSQL only forwards a whitelist of DSN keywords, so `options` in
+        // the DSN never reaches libpq. PGOPTIONS is read by libpq directly, so
+        // it is the only channel that reliably delivers the endpoint id.
+        $this->assertSame(
+            'endpoint=ep-spring-forest-b7uollmz',
+            getenv('PGOPTIONS'),
+            'libpq reads PGOPTIONS from the environment; the endpoint must be there.'
+        );
+        $this->assertSame('ep-spring-forest-b7uollmz', getenv('DB_NEON_ENDPOINT'));
+    }
+
     public function test_a_non_neon_url_is_left_alone(): void
     {
         $prepare = $this->neonUrlHelper();
 
+        putenv('PGOPTIONS');
         $result = $prepare('postgres://user:pass@db.example.com:5432/app');
 
         $this->assertSame('db.example.com', parse_url($result, PHP_URL_HOST));
+        $this->assertFalse(
+            getenv('PGOPTIONS'),
+            'A non-Neon host must not have PGOPTIONS forced upon it.'
+        );
     }
 
     public function test_the_connector_puts_the_endpoint_in_the_dsn(): void
