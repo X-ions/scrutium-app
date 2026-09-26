@@ -98,8 +98,13 @@ if (! is_file($tmp . '/packages.php')) {
 }
 
 if (empty(getenv('APP_KEY'))) {
-    $key = 'base64:' . base64_encode(random_bytes(32));
-    scrutium_putenv('APP_KEY', $key);
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "SCRUTIUM CONFIG ERROR\n\n";
+    echo "APP_KEY environment variable is required but not set.\n";
+    echo "Generate a key locally with: php artisan key:generate --show\n";
+    echo "Then add it to your Vercel project environment variables.\n";
+    exit(1);
 }
 
 try {
@@ -153,6 +158,14 @@ function scrutium_prepare_database_url(string $url): string
         return $url;
     }
 
+    $host = $parts['host'];
+    $endpoint = null;
+    // Neon-style endpoint detection (ep-*)
+    if (preg_match('/^(ep-[a-z0-9-]+)/i', $host, $matches) === 1) {
+        $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
+    }
+    // Vercel Postgres doesn't use endpoint in password, keep as-is
+
     parse_str($parts['query'] ?? '', $query);
     $query['sslmode'] = $query['sslmode'] ?? 'require';
     // channel_binding=require breaks PHP PDO pgsql on Vercel/Neon
@@ -163,7 +176,6 @@ function scrutium_prepare_database_url(string $url): string
     $auth = $user . ':' . $password;
     $port = isset($parts['port']) ? ':' . $parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';
-    $host = $parts['host'];
 
     return 'postgres://' . $auth . '@' . $host . $port . $path . '?' . http_build_query($query);
 }

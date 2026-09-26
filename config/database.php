@@ -73,7 +73,7 @@ return [
             'url' => env('DB_URL', env('DATABASE_URL', env('POSTGRES_URL'))),
             'host' => env('DB_HOST', env('POSTGRES_HOST', env('PGHOST', '127.0.0.1'))),
             'port' => env('DB_PORT', env('PGPORT', '5432')),
-            'database' => env('DB_DATABASE', env('POSTGRES_DATABASE', env('PGDATABASE', 'neondb'))),
+            'database' => env('DB_DATABASE', env('POSTGRES_DATABASE', env('PGDATABASE'))),
             'username' => env('DB_USERNAME', env('POSTGRES_USER', env('PGUSER', 'postgres'))),
             'password' => env('DB_PASSWORD', env('POSTGRES_PASSWORD', env('PGPASSWORD', ''))),
             'charset' => env('DB_CHARSET', 'utf8'),

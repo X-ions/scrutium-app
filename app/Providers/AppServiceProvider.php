@@ -32,8 +32,17 @@ class AppServiceProvider extends ServiceProvider
         $autoMigrate = filter_var(env('SCRUTIUM_AUTO_MIGRATE', true), FILTER_VALIDATE_BOOLEAN);
         if ($autoMigrate && env('DB_CONNECTION') === 'pgsql') {
             try {
-                if (! Schema::hasTable('tenants')) {
-                    Artisan::call('migrate', ['--force' => true]);
+                $lockPath = sys_get_temp_dir() . '/scrutium_migrate.lock';
+                $lock = @fopen($lockPath, 'c');
+                if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
+                    try {
+                        if (! Schema::hasTable('tenants')) {
+                            Artisan::call('migrate', ['--force' => true]);
+                        }
+                    } finally {
+                        flock($lock, LOCK_UN);
+                        fclose($lock);
+                    }
                 }
             } catch (Throwable $e) {
                 report($e);
