@@ -92,6 +92,11 @@ return [
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'require'),
             'options' => $pgsqlOptions,
+
+            // Neon pooled endpoints need their endpoint id in the DSN. Set by
+            // api/index.php from the host name; consumed by
+            // App\Database\Connectors\NeonPostgresConnector.
+            'neon_endpoint' => env('DB_NEON_ENDPOINT'),
         ],
 
         'sqlsrv' => [

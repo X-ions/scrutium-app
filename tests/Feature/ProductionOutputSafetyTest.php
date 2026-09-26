@@ -87,22 +87,24 @@ class ProductionOutputSafetyTest extends TestCase
 
         $source = (string) file_get_contents(base_path('api/index.php'));
 
-        preg_match(
+        // Both helpers, in dependency order: prepare_database_url() calls putenv().
+        foreach ([
+            '/function scrutium_putenv\(string \$key, string \$value\):\s*void\s*\{.*?\n\}/s',
             '/function scrutium_prepare_database_url\(string \$url\):\s*string\s*\{.*?\n\}/s',
-            $source,
-            $matches
-        );
+        ] as $pattern) {
+            preg_match($pattern, $source, $matches);
 
-        $this->assertNotEmpty($matches, 'Could not locate scrutium_prepare_database_url().');
+            $this->assertNotEmpty($matches, 'Could not extract a helper from api/index.php.');
 
-        eval($matches[0]);
+            eval($matches[0]);
+        }
 
         $callable = 'scrutium_prepare_database_url';
 
         return $callable;
     }
 
-    public function test_a_neon_pooler_url_carries_the_endpoint_id(): void
+    public function test_a_neon_pooler_url_does_not_put_options_in_the_url(): void
     {
         $prepare = $this->neonUrlHelper();
 
@@ -110,43 +112,61 @@ class ProductionOutputSafetyTest extends TestCase
             'postgresql://user:pass@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb?sslmode=require'
         );
 
-        $this->assertStringContainsString('ep-spring-forest-b7uollmz-pooler', $result, 'Host should be preserved.');
-
         parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
 
-        // Without this the driver raises SQLSTATE[08006] "Endpoint ID is not
-        // specified", which broke every session read and so every login.
-        $this->assertArrayHasKey('options', $query, 'A Neon pooler URL must carry an options parameter.');
-        $this->assertSame('endpoint=ep-spring-forest-b7uollmz', $query['options']);
+        // A URL-level "options" would be fed to Connector::getOptions(), which
+        // calls array_diff_key() on it and fails because it expects a PDO
+        // option map, not a libpq parameter string.
+        $this->assertArrayNotHasKey('options', $query, 'libpq options must not travel in the connection URL.');
 
         // The existing hardening must survive.
         $this->assertSame('require', $query['sslmode']);
         $this->assertSame('disable', $query['channel_binding']);
     }
 
-    public function test_a_direct_neon_endpoint_also_carries_the_endpoint_id(): void
+    public function test_the_connector_puts_the_endpoint_in_the_dsn(): void
     {
-        $prepare = $this->neonUrlHelper();
+        $connector = new \App\Database\Connectors\NeonPostgresConnector;
 
-        $result = $prepare('postgres://user:pass@ep-quiet-pond-a1b2c3d4.us-east-2.aws.neon.tech/neondb');
+        $config = [
+            'host' => 'ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech',
+            'port' => '5432',
+            'database' => 'neondb',
+            'neon_endpoint' => 'ep-spring-forest-b7uollmz',
+        ];
 
-        parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
+        $dsn = (function (array $config) {
+            return $this->getDsn($config);
+        })->call($connector, $config);
 
-        $this->assertSame('endpoint=ep-quiet-pond-a1b2c3d4', $query['options']);
+        $this->assertStringContainsString('endpoint=ep-spring-forest-b7uollmz', rawurldecode($dsn));
+
+        // And the libpq parameter string must not leak into the PDO options.
+        $options = $connector->getOptions($config);
+        $this->assertIsArray($options);
+        $this->assertArrayNotHasKey('neon_endpoint', $options);
     }
 
-    public function test_a_non_neon_url_is_left_without_endpoint_options(): void
+    public function test_the_connector_keeps_string_options_out_of_the_pdo_option_map(): void
     {
-        $prepare = $this->neonUrlHelper();
+        $connector = new \App\Database\Connectors\NeonPostgresConnector;
 
-        $result = $prepare('postgres://user:pass@db.example.com:5432/app');
+        // This is the shape that produced array_diff_key(array, string).
+        $options = $connector->getOptions([
+            'host' => 'ep-x.us-east-1.aws.neon.tech',
+            'database' => 'neondb',
+            'options' => 'endpoint=ep-x',
+        ]);
 
-        parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
+        $this->assertIsArray($options, 'getOptions() must always return an array.');
+    }
 
-        $this->assertArrayNotHasKey(
-            'options',
-            $query,
-            'Only Neon hosts should get the endpoint option; a plain Postgres host must be untouched.'
-        );
+    public function test_the_pgsql_config_carries_the_neon_endpoint(): void
+    {
+        // Only meaningful when api/index.php has derived one; on a local run it
+        // is simply null, which is fine and means the connector adds nothing.
+        $config = config('database.connections.pgsql');
+
+        $this->assertArrayHasKey('neon_endpoint', $config);
     }
 }

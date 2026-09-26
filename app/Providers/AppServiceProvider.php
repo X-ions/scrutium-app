@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Database\Connections\PostgresConnection;
+use App\Database\Connectors\NeonPostgresConnector;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
@@ -20,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
                 $connection, $database, $prefix, $config
             )
         );
+
+        // Swapped in for the stock connector so Neon's pooled endpoints receive
+        // the endpoint id in the DSN, where libpq looks for it.
+        $this->app->singleton('db.connector.pgsql', fn () => new NeonPostgresConnector);
 
         $storage = getenv('APP_STORAGE_PATH') ?: ($_ENV['APP_STORAGE_PATH'] ?? null);
         if ($storage) {

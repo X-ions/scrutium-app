@@ -189,10 +189,15 @@ function scrutium_prepare_database_url(string $url): string
     // derivable from the pooler hostname. Without it the driver fails with
     // SQLSTATE[08006] "Endpoint ID is not specified" — which broke every
     // session read, so no visitor ever got a session cookie and every form
-    // post came back as a 419. The endpoint is the first label of the host
-    // with any "-pooler" suffix removed.
+    // post came back as a 419.
+    //
+    // It is passed as its own variable rather than inside the URL: this is a
+    // libpq parameter string, and Laravel feeds a URL's "options" straight into
+    // Connector::getOptions(), which expects a PDO option map and throws
+    // "array_diff_key(): Argument #2 must be of type array" on a string.
+    // App\Database\Connectors\NeonPostgresConnector puts it in the DSN.
     if ($endpoint !== null) {
-        $query['options'] = 'endpoint='.$endpoint;
+        scrutium_putenv('DB_NEON_ENDPOINT', $endpoint);
     }
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
