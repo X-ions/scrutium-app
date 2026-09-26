@@ -126,11 +126,9 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      # Known-advisory baseline: 38 advisories remain in guzzlehttp/* and
-      # laravel/framework that are not resolvable without a major upgrade.
-      # Tracked in TODO.md; non-blocking so the rest of the gate stays meaningful.
+      # Baseline is clean: guzzle, laravel/framework, phpunit, psysh and symfony/yaml
+      # are all on patched versions, so this gate is blocking again on purpose.
       - name: Audit Composer dependencies
-        continue-on-error: true
         run: composer audit --no-interaction
 
       - name: Audit production npm dependencies

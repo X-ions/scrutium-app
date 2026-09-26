@@ -6,26 +6,29 @@ decision.
 
 **Current status:** the Scrutium application has authenticated, tenant-scoped routes, database-backed
 overview and module pages, campaign/roster/deliverable workflows, scoring recalculation, report
-snapshots, alert triage, integrations, settings, security headers, a nonce-based CSP, and a green
-CI pipeline running Pint, Pest, Biome and the Vite build on every push.
+snapshots, alert triage, integrations, settings, security headers, a nonce-based CSP, zero known
+dependency advisories, and a green CI pipeline running Pint, Pest, Biome and the Vite build.
 
-Legend: `[ ]` todo · `[~]` implemented, awaiting runtime verification · `[x]` implemented
+Legend: `[ ]` todo · `[~]` implemented, awaiting verification · `[x]` implemented
 
 ---
 
 ## Verification log
 
-Last run locally on PHP 8.3.8 / Laravel 12.26.4 / Node 22.
+Last run locally on PHP 8.3.8 / Laravel 12.69.2 / Node 22.
 
 - [x] `php artisan migrate:fresh --seed` — all 14 migrations plus `ScrutiumDemoSeeder` complete cleanly
-- [x] `php artisan test` — 24 tests, 108 assertions, all passing
-- [x] `vendor/bin/pint --test` — PASS on 110 files
-- [x] `npx biome lint resources/js` — PASS, 0 findings
-- [x] `npm run build` — succeeds; CSS 61 kB, JS 80 kB
+- [x] `php artisan test` — 26 tests, 140 assertions, all passing
+- [x] `vendor/bin/pint --test` — PASS on 111 files
+- [x] `npm run lint` (Biome) — PASS, 0 findings
+- [x] `npm run build` — succeeds; **CSS 52 kB, JS 80 kB** (was 152 kB / 1265 kB)
+- [x] `composer audit` — **no security vulnerability advisories found**
 - [x] `npm audit --omit=dev --audit-level=high` — 0 vulnerabilities
-- [x] Production database is managed Postgres (Neon) via `DB_URL`, not the old `/tmp` SQLite
 
-> Note: Composer is not on `PATH` on this machine. Run it as
+> Measure CSS after `php artisan view:clear`. `app.css` scans compiled Blade caches, so a warm cache
+> re-emits utilities for deleted classes and inflates the number by ~15 kB. CI is unaffected.
+>
+> Composer is not on `PATH` on this machine. Run it as
 > `php "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\PHP.PHP.8.3_Microsoft.Winget.Source_8wekyb3d8bbwe\composer.phar" <cmd>`.
 
 ---
@@ -48,8 +51,8 @@ Last run locally on PHP 8.3.8 / Laravel 12.26.4 / Node 22.
 - [x] Enums for campaign stage, verification status, and alert severity
 - [x] Money/currency + date conventions (`decimal:2` + tenant `currency`)
 
-Deferred: a `metrics` reference table for per-tenant metric definitions — the scoring engine
-reads metric keys from `score_configs.weights`.
+Deferred: a `metrics` reference table for per-tenant metric definitions — the scoring engine reads
+metric keys from `score_configs.weights`. Revisit when metrics become user-definable.
 
 ## Goal 2 — Authentication & access control
 
@@ -68,30 +71,37 @@ reads metric keys from `score_configs.weights`.
 ## Goal 4 — English UI & RTL layout
 
 - [x] English-only UI copy; direction selector limited to English (LTR) and Arabic (RTL)
-- [x] Logical properties applied across surviving components; the notification dropdown and the
-      overview table header were corrected (`ltr:`/`rtl:` mirroring, `text-start`)
-- [ ] **Browser-level RTL QA is still unverified.** Static analysis is clean, but no automated test
-      renders a page in `dir="rtl"`, and there is no browser test suite. Needs manual passes over
-      every page at both directions, or a Dusk/Playwright suite.
+- [x] Logical properties applied across all surviving views; `RtlComplianceTest` now fails the build
+      if a physical-direction utility (`ml-`, `left-`, `text-right`, …) reappears without an
+      `ltr:`/`rtl:` wrapper
+- [x] Fixed real defects: notification dropdown flew off-screen in RTL, dashboard table header used
+      `text-left`, status dot and error-page centring used physical offsets
+- [ ] **Browser-level RTL QA is still unverified.** The regression test is static analysis only — it
+      proves the class names are logical, not that the rendered layout is correct. Needs manual passes
+      over every page in both directions, or a Dusk/Playwright suite.
 
 ## Goal 5 — Cleanup & dead code
 
-- [x] Removed the 13 unrouted TailAdmin demo pages, the 30 components and 38 view classes only they
-      used, the 9 orphaned JS modules, and 778 lines of dead third-party CSS
+- [x] Removed the 13 unrouted TailAdmin demo pages, the 35 components and 38 view classes only they
+      used, the 9 orphaned JS modules, and ~870 lines of dead third-party CSS
 - [x] Removed 9 now-unused npm packages (ApexCharts, Flatpickr, FullCalendar, jsVectorMap, Swiper,
-      Prism.js, Popper, Floating UI, temporal-polyfill). Bundle: CSS 152 kB → 61 kB, JS 1265 kB → 80 kB
+      Prism.js, Popper, Floating UI, temporal-polyfill). **Bundle: CSS 152 → 52 kB, JS 1265 → 80 kB**
+- [x] Pruned the remaining dead app-owned CSS (`tableCheckbox`, `taskCheckbox`, `form-check-input`,
+      `social-button`, `edit-button`, `docs-*`, `nav-icon-item*`, `.simplebar-*`, and 11 unused
+      `menu-dropdown-*` / `menu-item-arrow-*` `@utility` blocks). 8 live utilities remain, no duplicates
+- [x] Removed 5 orphaned inline SVG entries from `MenuHelper`; all 10 remaining icons are referenced
 - [x] `DashboardController` returns the live overview view; obsolete `SidebarController` removed
 - [x] `/hello`, `tailwind-laravel.png`, and `api/debug.php` removed
 - [x] CD resolved: Vercel Git integration is the deployment path, so the placeholder `cd.yml` was deleted
-- [ ] Prune the remaining zero-usage app-owned CSS utilities (`tableCheckbox`, `taskCheckbox`,
-      `.task`, `form-check-input`, `social-button`, `edit-button`, `docs-*`, `nav-icon-item*`,
-      `.simplebar-*`) and the stale `ecommerce`/`ui-elements` icon entries in `MenuHelper`
+- [x] `AGENTS.md` corrected where it had drifted: the `components/svg/` + `<x-svg.*>` convention (icons
+      are inline strings in `MenuHelper`), the non-existent `routes/api.php`, the removed
+      `<x-common.component-card>`, and utilities that no longer exist
 
 ## Goal 6 — Deploy & production readiness
 
-- [x] Managed Postgres (Neon) wired through `DB_URL`, with a custom `PostgresConnection` that
-      preserves boolean bindings (Laravel's `prepareBindings()` casts bools to int, which PostgreSQL
-      rejects for `boolean` columns)
+- [x] Managed Postgres (Neon) wired through `DB_URL`, with a custom `PostgresConnection` that preserves
+      boolean bindings (Laravel's `prepareBindings()` casts bools to int, which PostgreSQL rejects for
+      `boolean` columns)
 - [x] Real session + encrypted cookie/database-capable session configuration
 - [x] Baseline security headers, HSTS, and a **nonce-based CSP** whose `script-src` has no
       `'unsafe-inline'`; all inline event handlers converted to Alpine; `trustProxies` configured so
@@ -100,7 +110,7 @@ reads metric keys from `score_configs.weights`.
 - [x] Evidence disk is configurable via `EVIDENCE_DISK` and logs a warning if it resolves to a
       non-durable disk in production
 - [ ] **Deliverable evidence storage still needs credentials.** `league/flysystem-aws-s3-v3` is
-      installed and the code is disk-agnostic, but until `EVIDENCE_DISK=s3` plus `AWS_*` variables
+      installed and the code is disk-agnostic, but until `EVIDENCE_DISK=s3` plus the `AWS_*` variables
       are set, uploads land on Vercel's ephemeral `/tmp` and are lost on the next cold start.
       Action: create a bucket, set the AWS env vars, flip `EVIDENCE_DISK`.
 - [ ] Queue worker / scheduler. Deliberately not built yet: there are no long-running jobs, no
@@ -108,23 +118,23 @@ reads metric keys from `score_configs.weights`.
       Vercel, cron frequency is also plan-capped (Hobby = once/day), so a queue would currently add
       latency rather than remove it. Revisit when a real sync or export job exists.
 - [ ] Drop `'unsafe-eval'` from `script-src`. Requires switching to the `@alpinejs/csp` Alpine build
-      plus browser QA of every `x-data` / `x-on` expression in the app. The test suite cannot catch
-      a broken Alpine directive.
+      plus browser QA of every `x-data` / `x-on` expression. The test suite cannot catch a broken
+      Alpine directive, so this is not safe to do blind.
 
 ## Goal 7 — Quality gates
 
-- [x] CI runs PHP 8.3 (Composer validate, syntax check, Pint, Pest), Node 22 (Biome lint, Vite
-      build), and dependency audits
+- [x] CI runs PHP 8.3 (Composer validate, syntax check, Pint, Pest), Node 22 (Biome lint, Vite build),
+      and dependency audits
 - [x] `composer lint` / `composer format` scripts; codebase normalized so the Pint gate passes
 - [x] `npm run lint` / `npm run lint:fix` via Biome with a checked-in `biome.json`
-- [x] Deployed-application smoke test job (hits `/signin` and asserts `/health/db` reports `ok`) on
+- [x] Deployed-application smoke test job (hits `/signin`, asserts `/health/db` reports `ok`) on
       pushes to `main`
-- [x] Authentication, tenant-isolation, scoring, verification-rule, security-header and CSP
-      regression tests
-- [ ] **38 Composer advisories remain** in `guzzlehttp/guzzle`, `guzzlehttp/psr7` and
-      `laravel/framework`. Guzzle was updated to 7.15.5 and psr7 to 2.13.1, which cleared 4, but the
-      rest need a `laravel/framework` upgrade. The CI audit step is `continue-on-error` so the rest
-      of the gate stays meaningful; remove that override once the advisories are cleared.
+- [x] Regression tests for auth, tenant isolation, scoring, verification rules, security headers, CSP
+      and RTL compliance — 26 tests total
+- [x] **All 42 Composer advisories cleared** by upgrading `laravel/framework` 12.26.4 → 12.69.2,
+      `guzzlehttp/guzzle` → 7.15.5, `guzzlehttp/psr7` → 2.13.1, `pestphp/pest` → 4.7.8,
+      `phpunit/phpunit` → 12.5.33, `psy/psysh` → 0.12.24 and `symfony/yaml` → 7.4.18. The `composer
+      audit` gate is blocking again.
 
 ---
 
@@ -134,7 +144,7 @@ reads metric keys from `score_configs.weights`.
 2. **M2 — Core loop:** campaigns → roster → deliverables → verification → audit log → *done*
 3. **M3 — Intelligence:** content monitoring, performance analytics, scoring engine → *done*
 4. **M4 — Scale:** reports, alerts, integrations, roles & permissions → *done*
-5. **M5 — Hardening:** prod DB/session/storage, CI green, RTL QA complete → *storage credentials and
+5. **M5 — Hardening:** prod DB/session/storage, CI green, RTL QA complete → *evidence credentials and
    browser RTL QA outstanding*
 
 ## Definition of done (functional app)
@@ -146,3 +156,20 @@ reads metric keys from `score_configs.weights`.
 - [x] Reports export, alerts fire, integrations show real platform health
 - [x] CI runs tests on every PR and deploys land without manual steps
 - [ ] Submitted evidence survives a serverless cold start (blocked on bucket credentials)
+
+## Suggested next features
+
+The hardening goals above are done as far as they can be without credentials. High-value follow-ons,
+roughly in dependency order:
+
+1. **Integration sync** — `IntegrationController` stores provider config but nothing ever calls out to a
+   provider. Real OAuth + a queued pull for platform metrics is the largest missing product capability,
+   and it is also what would finally justify the queue worker.
+2. **Per-tenant metric definitions** — closes the deferred `metrics` reference table and makes
+   `score_configs.weights` user-editable rather than fixed.
+3. **Evidence review UX** — the audit trail records state changes, but there is no side-by-side
+   submit-vs-approve view for a verifier.
+4. **Exports** — reports stream JSON from the `payload` column; a real CSV/XLSX export and scheduled
+   delivery would use the storage layer that S3 evidence will provide.
+5. **Browser test harness** — Dusk or Playwright would close the RTL QA gap and let UI regressions be
+   caught in CI rather than by hand.
