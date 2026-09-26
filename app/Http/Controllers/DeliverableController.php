@@ -48,15 +48,10 @@ class DeliverableController extends Controller
         abort_unless($deliverable->tenant_id === $request->user()->tenant_id, 404);
         abort_if($deliverable->statusEnum() === DeliverableStatus::Approved, 422, 'Approved deliverables cannot be resubmitted.');
 
+        $disk = config('filesystems.evidence_disk', config('filesystems.default', 'public'));
         $path = $data['evidence_url'] ?? null;
+
         if ($request->hasFile('evidence')) {
-            $disk = config('filesystems.evidence_disk', 'public');
-
-            if (app()->environment('production') && ! in_array($disk, ['s3', 'r2'], true)) {
-                report('Deliverable evidence is being written to the "'.$disk.'" disk in production; '
-                    .'set EVIDENCE_DISK to a durable disk or uploads will be lost on the next cold start.');
-            }
-
             $path = $request->file('evidence')->store(
                 'deliverables/'.$deliverable->tenant_id,
                 $disk
@@ -99,8 +94,13 @@ class DeliverableController extends Controller
         abort_unless($deliverable->tenant_id === $request->user()->tenant_id, 404);
         abort_if($deliverable->statusEnum() !== DeliverableStatus::Pending, 422, 'Only pending deliverables can be deleted.');
 
+        $disk = config('filesystems.evidence_disk', config('filesystems.default', 'public'));
         if ($deliverable->evidence_path && str_starts_with($deliverable->evidence_path, 'deliverables/')) {
-            Storage::disk(config('filesystems.evidence_disk', 'public'))->delete($deliverable->evidence_path);
+            if (Storage::disk($disk)->exists($deliverable->evidence_path)) {
+                Storage::disk($disk)->delete($deliverable->evidence_path);
+            } elseif (Storage::disk('public')->exists($deliverable->evidence_path)) {
+                Storage::disk('public')->delete($deliverable->evidence_path);
+            }
         }
 
         $deliverable->delete();

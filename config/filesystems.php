@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', env('AWS_BUCKET') || env('S3_BUCKET') ? 's3' : 'local'),
 
     /*
     |--------------------------------------------------------------------------
@@ -21,13 +21,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | Deliverable evidence must outlive a single serverless cold start, so it
-    | is pinned to a named disk rather than the default. Set EVIDENCE_DISK=s3
-    | together with the AWS_* variables in production; it falls back to
-    | "public" for local development.
+    | is pinned to a named disk rather than the default. In production Vercel
+    | env values should already define a durable S3-compatible disk; if not,
+    | we fall back to the same disk configured by FILESYSTEM_DISK.
     |
     */
 
-    'evidence_disk' => env('EVIDENCE_DISK', 'public'),
+    'evidence_disk' => env('EVIDENCE_DISK', env('FILESYSTEM_DISK', env('AWS_BUCKET') || env('S3_BUCKET') ? 's3' : 'public')),
 
     /*
     |--------------------------------------------------------------------------
@@ -63,15 +63,16 @@ return [
 
         's3' => [
             'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            'throw' => false,
+            'key' => env('AWS_ACCESS_KEY_ID', env('S3_KEY')),
+            'secret' => env('AWS_SECRET_ACCESS_KEY', env('S3_SECRET')),
+            'region' => env('AWS_DEFAULT_REGION', env('S3_REGION', 'us-east-1')),
+            'bucket' => env('AWS_BUCKET', env('S3_BUCKET')),
+            'url' => env('AWS_URL', env('S3_URL')),
+            'endpoint' => env('AWS_ENDPOINT', env('S3_ENDPOINT')),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', env('S3_FORCE_PATH_STYLE', true)),
+            'throw' => true,
             'report' => false,
+            'visibility' => 'public',
         ],
 
     ],

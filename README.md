@@ -112,14 +112,42 @@ This repo includes `vercel.json` and `api/index.php` for **vercel-php**.
 | `APP_DEBUG` | `false` |
 | `APP_URL` | `https://your-app.vercel.app` |
 | `LOG_CHANNEL` | `stderr` |
-| `SESSION_DRIVER` | `cookie` |
-| `CACHE_STORE` | `array` |
-| `QUEUE_CONNECTION` | `sync` |
-| `DB_CONNECTION` | `sqlite` |
+| `SESSION_DRIVER` | `database` |
+| `CACHE_STORE` | `database` |
+| `QUEUE_CONNECTION` | `database` |
+| `DB_CONNECTION` | `pgsql` |
+| `DATABASE_URL` | `postgres://...` (Neon branch URL) |
+| `FILESYSTEM_DISK` | `s3` |
+| `AWS_BUCKET` | `scrutium-production` |
+| `AWS_ENDPOINT` | `https://<your-neon-storage-endpoint>` |
+| `AWS_ACCESS_KEY_ID` | `...` |
+| `AWS_SECRET_ACCESS_KEY` | `...` |
+| `AWS_DEFAULT_REGION` | `us-east-1` |
+| `AWS_URL` | `https://<your-neon-storage-endpoint>/<bucket-name>` |
+| `AWS_USE_PATH_STYLE_ENDPOINT` | `true` |
 
 4. Redeploy after saving env vars.
 
-> Serverless note: writable paths use `/tmp`. For production data, plan a managed database (e.g. Neon, PlanetScale, RDS) instead of ephemeral SQLite.
+### Production storage with Neon + S3-compatible object storage
+
+The app is configured for a managed object store in production, since the local Laravel `public` disk is not persisted on Vercel or serverless deployments.
+
+Use the Neon Storage Data API or any S3-compatible bucket for uploaded documents. Configure the app with the generated S3 endpoint and credentials, then set:
+
+```env
+FILESYSTEM_DISK=s3
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=scrutium-production
+AWS_ENDPOINT=https://<your-neon-storage-endpoint>
+AWS_URL=https://<your-neon-storage-endpoint>/<your-bucket>
+AWS_USE_PATH_STYLE_ENDPOINT=true
+```
+
+This keeps deliverable evidence and other uploaded files accessible even when the app is deployed to production and the filesystem is ephemeral.
+
+> Serverless note: writable paths use `/tmp`. For production data, prefer Neon Postgres for the database and an S3-compatible bucket for document uploads instead of local files or SQLite.
 
 ---
 

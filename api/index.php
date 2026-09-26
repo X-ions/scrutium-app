@@ -50,7 +50,6 @@ $defaults = [
     'APP_NAME' => 'Scrutium',
     'APP_ENV' => 'production',
     'APP_URL' => 'https://scrutium.vercel.app',
-    'FILESYSTEM_DISK' => 'local',
 ];
 foreach ($defaults as $key => $value) {
     if (getenv($key) === false || getenv($key) === '') {
@@ -58,6 +57,10 @@ foreach ($defaults as $key => $value) {
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
     }
+}
+
+if ((getenv('FILESYSTEM_DISK') === false || getenv('FILESYSTEM_DISK') === '') && (! empty(getenv('AWS_BUCKET')) || ! empty(getenv('S3_BUCKET')))) {
+    scrutium_putenv('FILESYSTEM_DISK', 's3');
 }
 
 $neonUrl = scrutium_env_first([
