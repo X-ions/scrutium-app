@@ -223,7 +223,7 @@ function scrutium_prepare_database_url(string $url): string
          * Dropping "-pooler" above gives up PgBouncer connection pooling, which
          * is an optimisation rather than a requirement.
          */
-        $password = 'endpoint='.$endpoint.'$'.$password;
+        $password = 'endpoint='.$endpoint.'$'.rawurlencode($password);
 
         // Also exported for NeonPostgresConnector, which covers the pooled case
         // should the pooler host come back.
@@ -232,7 +232,12 @@ function scrutium_prepare_database_url(string $url): string
     }
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
-    $password = rawurlencode($password);
+    // Already encoded above when an endpoint prefix was added: re-encoding here
+    // would turn the literal "=" into %3D and PostgreSQL rejects the connection
+    // with "invalid command-line argument for server process".
+    if ($endpoint === null) {
+        $password = rawurlencode($password);
+    }
     $auth = $user.':'.$password;
     $port = isset($parts['port']) ? ':'.$parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';

@@ -165,10 +165,20 @@ class ProductionOutputSafetyTest extends TestCase
         // Neon's workaround D: libpq parses connection parameters out of the
         // password field, and PDO hands the password through untouched. This is
         // the only channel that survives PDO_PGSQL's DSN keyword whitelist.
+        //
+        // The prefix must survive verbatim. Percent-encoding the "=" produces
+        // "endpoint%3Dep-...", which PostgreSQL rejects with "invalid
+        // command-line argument for server process".
         $this->assertSame(
             'endpoint=ep-spring-forest-b7uollmz$s3cret',
             rawurldecode((string) parse_url($result, PHP_URL_PASS)),
             'The password must carry the endpoint id, or Neon rejects the connection with SQLSTATE[08006].'
+        );
+
+        $this->assertSame(
+            'endpoint=ep-spring-forest-b7uollmz$s3cret',
+            parse_url($result, PHP_URL_PASS),
+            'The "=" and "$" separators must not be percent-encoded, or the server cannot parse them.'
         );
     }
 
