@@ -112,6 +112,30 @@
                     <p class="truncate text-xs text-gray-400">{{ $authUser->job_title ?: $authUser->role()->name }}</p>
                 </div>
             </div>
+
+            <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-3 shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
+                <div class="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+                    <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">✦</span>
+                    DISCOVER
+                </div>
+
+                <div class="space-y-2">
+                    <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
+                        <span>Campaign tools</span>
+                    </a>
+                    <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
+                        <span>Partner integrations</span>
+                    </a>
+                    <a href="#" class="flex w-full items-center justify-between rounded-lg border border-transparent bg-white px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:border-brand-200 hover:text-brand-600 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-brand-500/40 dark:hover:text-brand-300">
+                        <span>Featured services</span>
+                    </a>
+                </div>
+
+                <a href="#" class="mt-3 inline-flex w-full items-center justify-between rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800 dark:bg-brand-500 dark:text-white dark:hover:bg-brand-400">
+                    <span>Explore</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+            </div>
         </div>
     @endif
 </aside>
