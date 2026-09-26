@@ -82,4 +82,21 @@ class TrustedProxyHeadersTest extends TestCase
             'X-Forwarded-Proto must still be trusted so HSTS can be emitted.'
         );
     }
+
+    public function test_dynamic_pages_are_never_publicly_cacheable(): void
+    {
+        // A cacheable HTML response is stripped of Set-Cookie by the edge, which
+        // costs the browser its session and turns every POST into a 419.
+        $response = $this->get('/signin')->assertOk();
+
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+
+        $this->assertStringNotContainsString(
+            'public',
+            $cacheControl,
+            "Sign-in must not be publicly cacheable, got: {$cacheControl}"
+        );
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('private', $cacheControl);
+    }
 }
