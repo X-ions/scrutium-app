@@ -251,12 +251,12 @@ class ScrutiumDemoSeeder extends Seeder
         }
 
         if ($stage === CampaignStage::Live) {
-            $deliverable->markSubmitted();
+            $deliverable->markSubmitted($this->demoEvidencePath($deliverable));
 
             return;
         }
 
-        $deliverable->markSubmitted();
+        $deliverable->markSubmitted($this->demoEvidencePath($deliverable));
 
         if (fake()->boolean(75)) {
             $deliverable->approve();
@@ -265,6 +265,18 @@ class ScrutiumDemoSeeder extends Seeder
         }
 
         $deliverable->reject('Disclosure missing from caption.');
+    }
+
+    /**
+     * A plausible evidence path for a seeded submission.
+     *
+     * Without one, every seeded Submitted deliverable is un-approvable through
+     * the UI: approve() refuses rows with no evidence, so the demo worklist
+     * looked complete but could not actually be worked through.
+     */
+    protected function demoEvidencePath(Deliverable $deliverable): string
+    {
+        return 'deliverables/'.$deliverable->tenant_id.'/demo-evidence-'.$deliverable->id.'.jpg';
     }
 
     protected function seedContentPosts(Campaign $campaign): void

@@ -292,3 +292,25 @@
   opacity: 0;
   -webkit-appearance: none;
 }
+
+/*
+  Cut-out ring used by the "How it works" tour to spotlight an element. The
+  oversized box-shadow dims the viewport and leaves a hole where the target is.
+  Geometry is set inline from the target's bounding box.
+*/
+@utility tour-spotlight {
+  position: fixed;
+  z-index: 99997;
+  pointer-events: none;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgb(15 23 42 / 0.55);
+  transition:
+    top 220ms ease,
+    left 220ms ease,
+    width 220ms ease,
+    height 220ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

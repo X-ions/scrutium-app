@@ -46,7 +46,15 @@ class DeliverableController extends Controller
         ]);
 
         abort_unless($deliverable->tenant_id === $request->user()->tenant_id, 404);
-        abort_if($deliverable->statusEnum() === DeliverableStatus::Approved, 422, 'Approved deliverables cannot be resubmitted.');
+
+        // Approved and Rejected are both terminal. The view hides the submit form
+        // for each, so guard both here or a crafted POST could resurrect a
+        // rejected deliverable and wipe its rejection reason.
+        abort_if(
+            in_array($deliverable->statusEnum(), [DeliverableStatus::Approved, DeliverableStatus::Rejected], true),
+            422,
+            'Approved or rejected deliverables cannot be resubmitted.'
+        );
 
         $disk = config('filesystems.evidence_disk', config('filesystems.default', 'public'));
         $path = $data['evidence_url'] ?? null;

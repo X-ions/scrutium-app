@@ -14,6 +14,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScoringController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'tenant'])->group(function (): void {
         ->whereIn('locale', array_keys(LocaleController::SUPPORTED_LOCALES))
         ->name('locale.switch');
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/how-it-works', [TourController::class, 'index'])->name('how-it-works');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');

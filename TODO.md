@@ -18,10 +18,10 @@ Legend: `[ ]` todo · `[~]` implemented, awaiting verification · `[x]` implemen
 Last run locally on PHP 8.3.8 / Laravel 12.69.2 / Node 22.
 
 - [x] `php artisan migrate:fresh --seed` — all 14 migrations plus `ScrutiumDemoSeeder` complete cleanly
-- [x] `php artisan test` — 26 tests, 140 assertions, all passing
-- [x] `vendor/bin/pint --test` — PASS on 111 files
+- [x] `php artisan test` — 42 tests, 263 assertions, all passing
+- [x] `vendor/bin/pint --test` — PASS on 115 files
 - [x] `npm run lint` (Biome) — PASS, 0 findings
-- [x] `npm run build` — succeeds; **CSS 52 kB, JS 80 kB** (was 152 kB / 1265 kB)
+- [x] `npm run build` — succeeds; **CSS 56 kB, JS 84 kB** (was 152 kB / 1265 kB)
 - [x] `composer audit` — **no security vulnerability advisories found**
 - [x] `npm audit --omit=dev --audit-level=high` — 0 vulnerabilities
 
@@ -33,7 +33,42 @@ Last run locally on PHP 8.3.8 / Laravel 12.69.2 / Node 22.
 
 ---
 
-## ✓ Already in place
+## Just shipped — "How it works" tour
+
+- [x] Clickable overlay tour (`resources/js/components/tour.js` + `components/common/tour.blade.php`):
+      spotlight cut-out, Back/Next/Skip, progress dots, keyboard nav (Esc, arrows), dismissable at
+      any point, and a `prefers-reduced-motion` guard
+- [x] Launches from the header ✦ button, from the guide page, and automatically on a user's first
+      dashboard visit (localStorage, so it never nags twice)
+- [x] `/how-it-works` — the permanent written version, numbered and linked, for anyone who
+      dismissed the overlay
+- [x] **Role-aware**: steps carry an `audience` (`any` / `operator` / `admin`) and are filtered
+      server-side, so a Viewer is never told to click a button the `operate` middleware will refuse,
+      and only admins are pointed at Settings
+- [x] Cross-page continuity: a step whose route differs from the current one navigates and resumes
+      via a sessionStorage hand-off that records the target route, so a stale entry cannot force the
+      tour open on an unrelated page
+- [x] 16 tests covering the guest guard, step ordering, route resolution, the role split, tour-copy
+      claims vs the domain enums, and the `@js()` HTML-attribute escaping that would otherwise break
+      Alpine on every page
+
+### Bugs the tour surfaced and fixed
+
+- [x] **Rejected deliverables could be resubmitted.** `DeliverableController::submit()` only guarded
+      `Approved`, so a crafted POST resurrected a rejected row and cleared its rejection reason. The
+      view already hid the form, so the intent was clear; the controller now guards both.
+- [x] **Seeded demo data was un-approvable.** The seeder called `markSubmitted()` with no argument,
+      leaving `evidence_path` null, and `approve()` refuses rows without evidence — so the demo
+      worklist looked full but every "Submitted" row dead-ended on a 422. The seeder now writes a
+      plausible evidence path.
+- [ ] **Evidence and rejection reasons are still never displayed.** `evidence_path` and
+      `rejection_reason` appear nowhere in any view, so a user who submits a file never sees it again
+      and never sees why something was rejected. The tour deliberately does not claim otherwise.
+      Worth fixing: render the stored evidence as a link and the rejection reason on
+      `deliverables/show`.
+
+---
+
 
 - [x] Laravel 12 + Tailwind v4 + Alpine.js + Vite scaffold (TailAdmin base)
 - [x] Rebranded sidebar / nav to Scrutium IA (`MenuHelper`)

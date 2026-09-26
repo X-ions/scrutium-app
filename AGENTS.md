@@ -15,9 +15,9 @@ resources/
 ├── css/
 │   └── app.css               # Tailwind CSS v4 theme (@theme), global utilities & 3rd party overrides
 ├── js/
-│   ├── app.js                # Main JS entry point (Alpine.js, component dynamic imports)
+│   ├── app.js                # Main JS entry point (Alpine.js, data-provider registrations)
 │   ├── bootstrap.js          # Axios & HTTP setup
-│   └── components/           # (removed — chart/calendar/map modules were TailAdmin-only)
+│   └── components/           # Alpine data providers (tour.js)
 └── views/
     ├── components/           # Reusable Blade components
     │   ├── common/           # Shared page elements (page-breadcrumb, flash-messages, common-grid-shape)
