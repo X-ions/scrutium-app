@@ -202,13 +202,21 @@ class ProductionOutputSafetyTest extends TestCase
         // Everything that handles a connection URL percent-encodes the password,
         // which would turn the "=" into %3D and the server would reject the
         // connection with "invalid command-line argument for server process".
-        $this->assertSame(
-            '',
-            (string) parse_url($result, PHP_URL_PASS),
+        $this->assertNull(
+            parse_url($result, PHP_URL_PASS),
             "The password must not travel in the URL. Got: {$result}"
         );
         $this->assertStringNotContainsString('s3cret', $result);
         $this->assertStringNotContainsString('endpoint=', $result);
+
+        // A dangling "user:@host" would parse with an empty password, which
+        // Laravel merges over DB_PASSWORD and the driver reports
+        // "fe_sendauth: no password supplied". The colon has to go too.
+        $this->assertStringContainsString(
+            '//user@',
+            $result,
+            'The password must be removed from the URL cleanly, colon included.'
+        );
 
         // It goes to the application through the environment instead, verbatim.
         $this->assertSame(

@@ -254,7 +254,15 @@ function scrutium_prepare_database_url(string $url): string
     }
 
     $password = rawurlencode($password);
-    $auth = $user.':'.$password;
+
+    /*
+     * The colon must be omitted along with the password, not left dangling.
+     * "user:@host" parses with an empty "pass" component, and Laravel merges the
+     * URL's parts *over* the connection config, so that empty string overwrites
+     * the DB_PASSWORD set above and the driver is handed no password at all:
+     *   SQLSTATE[08006] fe_sendauth: no password supplied
+     */
+    $auth = $password === '' ? $user : $user.':'.$password;
     $port = isset($parts['port']) ? ':'.$parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';
 
