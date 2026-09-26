@@ -158,7 +158,9 @@ class ProductionOutputSafetyTest extends TestCase
     {
         $prepare = $this->neonUrlHelper();
 
-        $result = $prepare(
+        putenv('DB_PASSWORD');
+
+        $prepare(
             'postgresql://user:s3cret@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb'
         );
 
@@ -166,19 +168,13 @@ class ProductionOutputSafetyTest extends TestCase
         // password field, and PDO hands the password through untouched. This is
         // the only channel that survives PDO_PGSQL's DSN keyword whitelist.
         //
-        // The prefix must survive verbatim. Percent-encoding the "=" produces
+        // The separators must survive verbatim. Percent-encoding the "=" gives
         // "endpoint%3Dep-...", which PostgreSQL rejects with "invalid
         // command-line argument for server process".
         $this->assertSame(
             'endpoint=ep-spring-forest-b7uollmz$s3cret',
-            rawurldecode((string) parse_url($result, PHP_URL_PASS)),
+            getenv('DB_PASSWORD'),
             'The password must carry the endpoint id, or Neon rejects the connection with SQLSTATE[08006].'
-        );
-
-        $this->assertSame(
-            'endpoint=ep-spring-forest-b7uollmz$s3cret',
-            parse_url($result, PHP_URL_PASS),
-            'The "=" and "$" separators must not be percent-encoded, or the server cannot parse them.'
         );
     }
 
@@ -189,6 +185,54 @@ class ProductionOutputSafetyTest extends TestCase
         $result = $prepare('postgres://user:s3cret@db.example.com:5432/app');
 
         $this->assertSame('s3cret', rawurldecode((string) parse_url($result, PHP_URL_PASS)));
+    }
+
+    public function test_a_neon_password_never_passes_through_the_url(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        putenv('DB_PASSWORD');
+        $_ENV['DB_PASSWORD'] = '';
+        $_SERVER['DB_PASSWORD'] = '';
+
+        $result = $prepare(
+            'postgresql://user:s3cret@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb'
+        );
+
+        // Everything that handles a connection URL percent-encodes the password,
+        // which would turn the "=" into %3D and the server would reject the
+        // connection with "invalid command-line argument for server process".
+        $this->assertSame(
+            '',
+            (string) parse_url($result, PHP_URL_PASS),
+            "The password must not travel in the URL. Got: {$result}"
+        );
+        $this->assertStringNotContainsString('s3cret', $result);
+        $this->assertStringNotContainsString('endpoint=', $result);
+
+        // It goes to the application through the environment instead, verbatim.
+        $this->assertSame(
+            'endpoint=ep-spring-forest-b7uollmz$s3cret',
+            getenv('DB_PASSWORD'),
+            'DB_PASSWORD must carry the endpoint prefix with its separators unencoded.'
+        );
+    }
+
+    public function test_the_endpoint_prefix_is_not_applied_twice(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        putenv('DB_PASSWORD');
+
+        $result = $prepare(
+            'postgresql://user:endpoint%3Dep-spring-forest-b7uollmz%24s3cret@ep-spring-forest-b7uollmz.c-13.us-east-1.aws.neon.tech/neondb'
+        );
+
+        $this->assertSame(
+            'endpoint=ep-spring-forest-b7uollmz$s3cret',
+            getenv('DB_PASSWORD'),
+            'A password that already carries the endpoint must be left alone.'
+        );
     }
 
     public function test_a_non_neon_url_is_left_alone(): void

@@ -223,8 +223,6 @@ function scrutium_prepare_database_url(string $url): string
          * Dropping "-pooler" above gives up PgBouncer connection pooling, which
          * is an optimisation rather than a requirement.
          */
-        $password = 'endpoint='.$endpoint.'$'.rawurlencode($password);
-
         // Also exported for NeonPostgresConnector, which covers the pooled case
         // should the pooler host come back.
         scrutium_putenv('PGOPTIONS', 'endpoint='.$endpoint);
@@ -232,12 +230,30 @@ function scrutium_prepare_database_url(string $url): string
     }
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
-    // Already encoded above when an endpoint prefix was added: re-encoding here
-    // would turn the literal "=" into %3D and PostgreSQL rejects the connection
-    // with "invalid command-line argument for server process".
-    if ($endpoint === null) {
-        $password = rawurlencode($password);
+
+    /*
+     * A Neon password carries the "endpoint=<id>$" prefix, and the "=" and "$"
+     * separators must reach libpq verbatim. They cannot travel inside the
+     * connection URL: every layer that handles a URL percent-encodes the
+     * password, which turns them into "%3D" and "%24" and PostgreSQL then
+     * rejects the connection with "invalid command-line argument for server
+     * process".
+     *
+     * So the password is removed from the URL entirely and handed to the
+     * application through the environment instead. config/database.php already
+     * reads DB_PASSWORD, and because the URL no longer carries a password
+     * component, nothing re-encodes or overrides it.
+     */
+    if ($endpoint !== null) {
+        if (! str_starts_with($password, 'endpoint=')) {
+            $password = 'endpoint='.$endpoint.'$'.$password;
+        }
+
+        scrutium_putenv('DB_PASSWORD', $password);
+        $password = '';
     }
+
+    $password = rawurlencode($password);
     $auth = $user.':'.$password;
     $port = isset($parts['port']) ? ':'.$parts['port'] : '';
     $path = $parts['path'] ?? '/neondb';
