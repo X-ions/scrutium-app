@@ -19,8 +19,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
+Route::get('/build', function () {
+    return response()->json([
+        'build' => config('app.build'),
+        'laravel' => app()->version(),
+        'php' => PHP_VERSION,
+    ]);
+});
+
 Route::get('/health/db', function () {
     $diagnostics = [
+        'build' => config('app.build'),
         'driver' => config('database.default'),
         'pdo_pgsql' => extension_loaded('pdo_pgsql'),
         'db_neon_endpoint_env' => getenv('DB_NEON_ENDPOINT') ?: null,

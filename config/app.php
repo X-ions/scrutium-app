@@ -30,6 +30,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Build Identifier
+    |--------------------------------------------------------------------------
+    |
+    | Bumped on every deploy that matters and reported by /build and /health/db.
+    | Vercel serves several deployments at once and it is otherwise impossible
+    | to tell which one a given hostname is running, which makes diagnosing
+    | environment problems needlessly slow. A 404 from /build means the running
+    | code predates it.
+    |
+    */
+
+    'build' => env('APP_BUILD', 'cde61c1'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
     |
