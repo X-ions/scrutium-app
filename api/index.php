@@ -245,11 +245,22 @@ function scrutium_prepare_database_url(string $url): string
      * component, nothing re-encodes or overrides it.
      */
     if ($endpoint !== null) {
-        if (! str_starts_with($password, 'endpoint=')) {
-            $password = 'endpoint='.$endpoint.'$'.$password;
+        /*
+         * The password may live in the URL or in DB_PASSWORD already, and Neon
+         * credentials are sometimes supplied split across both. Prefer the one
+         * that is actually populated, and never discard an existing
+         * DB_PASSWORD by overwriting it with an empty one.
+         */
+        $existing = getenv('DB_PASSWORD');
+        $secret = $password !== ''
+            ? $password
+            : (is_string($existing) ? $existing : '');
+
+        if (! str_starts_with($secret, 'endpoint=')) {
+            $secret = 'endpoint='.$endpoint.'$'.$secret;
         }
 
-        scrutium_putenv('DB_PASSWORD', $password);
+        scrutium_putenv('DB_PASSWORD', $secret);
         $password = '';
     }
 

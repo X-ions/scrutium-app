@@ -243,6 +243,26 @@ class ProductionOutputSafetyTest extends TestCase
         );
     }
 
+    public function test_an_existing_db_password_is_not_clobbered_by_a_passwordless_url(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        putenv('DB_PASSWORD=s3cret');
+        $_ENV['DB_PASSWORD'] = 's3cret';
+        $_SERVER['DB_PASSWORD'] = 's3cret';
+
+        // Neon credentials are sometimes supplied split across DB_URL (no
+        // password) and a separate DB_PASSWORD. Overwriting that with an empty
+        // value would leave the app with no secret at all.
+        $prepare('postgresql://user@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb');
+
+        $this->assertSame(
+            'endpoint=ep-spring-forest-b7uollmz$s3cret',
+            getenv('DB_PASSWORD'),
+            'A passwordless DB_URL must not wipe out an existing DB_PASSWORD.'
+        );
+    }
+
     public function test_a_non_neon_url_is_left_alone(): void
     {
         $prepare = $this->neonUrlHelper();
