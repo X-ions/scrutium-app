@@ -174,9 +174,21 @@ function scrutium_prepare_database_url(string $url): string
 
     $host = $parts['host'];
     $endpoint = null;
-    // Neon-style endpoint detection (ep-*)
-    if (preg_match('/^(ep-[a-z0-9-]+)/i', $host, $matches) === 1) {
-        $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
+    /*
+     * The endpoint is the first label of the host, without any "-pooler"
+     * suffix. Neon is not consistent about naming: current endpoints look like
+     * "ep-xxxx-pooler.us-east-1.aws.neon.tech" but older projects use names with
+     * no "ep-" prefix at all, such as "ep-xxxx.us-east-2.aws.neon.tech" and the
+     * legacy "<name>.region.aws.neon.tech". Matching on the "ep-" prefix alone
+     * silently produced no endpoint at all for those, which is indistinguishable
+     * from the fix not being deployed.
+     */
+    if (preg_match('/^([a-z0-9][a-z0-9-]*)\./i', $host, $matches) === 1) {
+        $candidate = $matches[1];
+
+        if (preg_match('/\.(neon\.tech|neon\.build)$/i', $host) === 1) {
+            $endpoint = preg_replace('/-pooler$/i', '', $candidate) ?: $candidate;
+        }
     }
 
     $password = urldecode((string) ($parts['pass'] ?? ''));

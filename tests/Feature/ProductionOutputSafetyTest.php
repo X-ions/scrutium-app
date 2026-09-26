@@ -263,6 +263,49 @@ class ProductionOutputSafetyTest extends TestCase
         );
     }
 
+    public function test_the_endpoint_is_found_for_every_neon_host_naming_style(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $hosts = [
+            // current pooled
+            'ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech' => 'ep-spring-forest-b7uollmz',
+            // current direct
+            'ep-spring-forest-b7uollmz.c-13.us-east-1.aws.neon.tech' => 'ep-spring-forest-b7uollmz',
+            // no ep- prefix
+            'quiet-pond-123456.us-east-2.aws.neon.tech' => 'quiet-pond-123456',
+            // oldest naming seen from Neon
+            'frosty-sea-109598.cloud.neon.tech' => 'frosty-sea-109598',
+        ];
+
+        foreach ($hosts as $host => $expected) {
+            putenv('DB_PASSWORD');
+
+            $prepare('postgresql://user:s3cret@'.$host.'/neondb');
+
+            $this->assertSame(
+                'endpoint='.$expected.'$s3cret',
+                getenv('DB_PASSWORD'),
+                "No endpoint was derived for host: {$host}"
+            );
+        }
+    }
+
+    public function test_a_non_neon_host_is_left_untouched(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        putenv('DB_PASSWORD');
+
+        $result = $prepare('postgres://user:s3cret@db.example.com:5432/app');
+
+        $this->assertFalse(
+            getenv('DB_PASSWORD'),
+            'A non-Neon host must not be given a Neon endpoint.'
+        );
+        $this->assertSame('db.example.com', parse_url($result, PHP_URL_HOST));
+    }
+
     public function test_a_non_neon_url_is_left_alone(): void
     {
         $prepare = $this->neonUrlHelper();

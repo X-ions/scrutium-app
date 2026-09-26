@@ -28,12 +28,34 @@ Route::get('/build', function () {
 });
 
 Route::get('/health/db', function () {
+    $rawUrl = (string) (getenv('DB_URL') ?: '');
+
+    // Report the shape of the real connection URL so nobody has to guess at it.
+    // Never includes the username or password: only the structural facts needed
+    // to explain why a connection is failing.
+    $urlShape = [
+        'scheme' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_SCHEME) : null,
+        'host' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_HOST) : null,
+        'port' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_PORT) : null,
+        'url_has_password' => $rawUrl === '' ? null : parse_url($rawUrl, PHP_URL_PASS) !== null,
+        'url_path' => $rawUrl !== '' ? parse_url($rawUrl, PHP_URL_PATH) : null,
+        'url_query_keys' => $rawUrl === ''
+            ? []
+            : array_keys((array) parse_url($rawUrl, PHP_URL_QUERY)),
+    ];
+
     $diagnostics = [
         'build' => config('app.build'),
+        'url_shape' => $urlShape,
         'driver' => config('database.default'),
         'pdo_pgsql' => extension_loaded('pdo_pgsql'),
         'db_neon_endpoint_env' => getenv('DB_NEON_ENDPOINT') ?: null,
         'configured_neon_endpoint' => config('database.connections.pgsql.neon_endpoint'),
+        'db_password_present' => (bool) (getenv('DB_PASSWORD') ?: ''),
+        'db_password_has_endpoint' => str_starts_with(
+            (string) (getenv('DB_PASSWORD') ?: ''),
+            'endpoint='
+        ),
         'db_host' => config('database.connections.pgsql.host'),
         'db_port' => config('database.connections.pgsql.port'),
         'db_database' => config('database.connections.pgsql.database'),
