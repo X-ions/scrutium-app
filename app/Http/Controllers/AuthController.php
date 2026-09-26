@@ -86,12 +86,13 @@ class AuthController extends Controller
                     'job_title' => 'Workspace owner',
                 ]);
 
-                ScoreConfig::create([
+                $scoreConfig = new ScoreConfig([
                     'name' => 'Default creator score',
                     'description' => 'Balanced starting weights for creator evaluation.',
                     'weights' => ScoreConfig::DEFAULT_WEIGHTS,
-                    'is_default' => true,
                 ]);
+                $scoreConfig->is_default = true;
+                $scoreConfig->save();
 
                 AlertSubscription::create([
                     'user_id' => $user->id,
@@ -121,3 +122,4 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'You have been signed out.');
     }
 }
+
