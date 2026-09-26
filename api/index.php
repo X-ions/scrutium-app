@@ -178,12 +178,22 @@ function scrutium_prepare_database_url(string $url): string
     if (preg_match('/^(ep-[a-z0-9-]+)/i', $host, $matches) === 1) {
         $endpoint = preg_replace('/-pooler$/i', '', $matches[1]) ?: $matches[1];
     }
-    // Vercel Postgres doesn't use endpoint in password, keep as-is
 
     parse_str($parts['query'] ?? '', $query);
     $query['sslmode'] = $query['sslmode'] ?? 'require';
     // channel_binding=require breaks PHP PDO pgsql on Vercel/Neon
     $query['channel_binding'] = 'disable';
+
+    // Connecting to a Neon *pooler* host requires the endpoint id as well,
+    // because the pooler terminates TLS using SNI and the endpoint is not
+    // derivable from the pooler hostname. Without it the driver fails with
+    // SQLSTATE[08006] "Endpoint ID is not specified" — which broke every
+    // session read, so no visitor ever got a session cookie and every form
+    // post came back as a 419. The endpoint is the first label of the host
+    // with any "-pooler" suffix removed.
+    if ($endpoint !== null) {
+        $query['options'] = 'endpoint='.$endpoint;
+    }
 
     $user = rawurlencode(urldecode((string) ($parts['user'] ?? '')));
     $password = rawurlencode(urldecode((string) ($parts['pass'] ?? '')));

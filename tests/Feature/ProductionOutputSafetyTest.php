@@ -71,4 +71,82 @@ class ProductionOutputSafetyTest extends TestCase
 
         $this->assertTrue(true, 'Neither PDO pgsql constant is available on this runtime; nothing to assert.');
     }
+
+    /**
+     * api/index.php must run before the Composer autoloader exists, so the
+     * Neon URL helper is a standalone function. Load just that function into
+     * this test's scope and exercise it for real.
+     */
+    private function neonUrlHelper(): callable
+    {
+        static $callable = null;
+
+        if ($callable !== null) {
+            return $callable;
+        }
+
+        $source = (string) file_get_contents(base_path('api/index.php'));
+
+        preg_match(
+            '/function scrutium_prepare_database_url\(string \$url\):\s*string\s*\{.*?\n\}/s',
+            $source,
+            $matches
+        );
+
+        $this->assertNotEmpty($matches, 'Could not locate scrutium_prepare_database_url().');
+
+        eval($matches[0]);
+
+        $callable = 'scrutium_prepare_database_url';
+
+        return $callable;
+    }
+
+    public function test_a_neon_pooler_url_carries_the_endpoint_id(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $result = $prepare(
+            'postgresql://user:pass@ep-spring-forest-b7uollmz-pooler.c-13.us-east-1.aws.neon.tech/neondb?sslmode=require'
+        );
+
+        $this->assertStringContainsString('ep-spring-forest-b7uollmz-pooler', $result, 'Host should be preserved.');
+
+        parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
+
+        // Without this the driver raises SQLSTATE[08006] "Endpoint ID is not
+        // specified", which broke every session read and so every login.
+        $this->assertArrayHasKey('options', $query, 'A Neon pooler URL must carry an options parameter.');
+        $this->assertSame('endpoint=ep-spring-forest-b7uollmz', $query['options']);
+
+        // The existing hardening must survive.
+        $this->assertSame('require', $query['sslmode']);
+        $this->assertSame('disable', $query['channel_binding']);
+    }
+
+    public function test_a_direct_neon_endpoint_also_carries_the_endpoint_id(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $result = $prepare('postgres://user:pass@ep-quiet-pond-a1b2c3d4.us-east-2.aws.neon.tech/neondb');
+
+        parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
+
+        $this->assertSame('endpoint=ep-quiet-pond-a1b2c3d4', $query['options']);
+    }
+
+    public function test_a_non_neon_url_is_left_without_endpoint_options(): void
+    {
+        $prepare = $this->neonUrlHelper();
+
+        $result = $prepare('postgres://user:pass@db.example.com:5432/app');
+
+        parse_str((string) parse_url($result, PHP_URL_QUERY), $query);
+
+        $this->assertArrayNotHasKey(
+            'options',
+            $query,
+            'Only Neon hosts should get the endpoint option; a plain Postgres host must be untouched.'
+        );
+    }
 }
