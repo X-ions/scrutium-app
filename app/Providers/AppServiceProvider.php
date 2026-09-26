@@ -45,7 +45,15 @@ class AppServiceProvider extends ServiceProvider
                 $lock = @fopen($lockPath, 'c');
                 if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
                     try {
-                        if (! Schema::hasTable('tenants')) {
+                        $migrator = app('migrator');
+                        $repository = $migrator->getRepository();
+                        $ranMigrations = $repository->repositoryExists() ? $repository->getRan() : [];
+                        $pendingMigrations = array_diff(
+                            array_keys($migrator->getMigrationFiles(database_path('migrations'))),
+                            $ranMigrations,
+                        );
+
+                        if (! Schema::hasTable('tenants') || $pendingMigrations !== []) {
                             Artisan::call('migrate', ['--force' => true]);
                         }
                     } finally {

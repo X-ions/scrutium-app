@@ -97,6 +97,7 @@ Route::middleware(['auth', 'tenant'])->group(function (): void {
         Route::patch('/alerts/subscriptions/{subscription}', [AlertController::class, 'updateSubscription'])->name('alerts.subscriptions.update');
         Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations');
         Route::post('/integrations', [IntegrationController::class, 'store'])->name('integrations.store');
+        Route::patch('/integrations/{integration}/credentials', [IntegrationController::class, 'updateCredentials'])->name('integrations.credentials');
         Route::post('/integrations/{integration}/connect', [IntegrationController::class, 'connect'])->name('integrations.connect');
         Route::post('/integrations/{integration}/disconnect', [IntegrationController::class, 'disconnect'])->name('integrations.disconnect');
     });
