@@ -1,4 +1,4 @@
-# Scrutium
+# Scrutium | X-ion, Inc.
 
 **Enterprise influencer marketing intelligence platform.**
 
