@@ -1,5 +1,6 @@
 @php
     use App\Helpers\MenuHelper;
+    $workspace = $workspace ?? auth()->user()?->tenant;
     $menuGroups = MenuHelper::getMenuGroups();
     $currentPath = request()->path();
 @endphp
