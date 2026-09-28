@@ -50,8 +50,8 @@ $defaults = [
     'APP_NAME' => 'Scrutium',
     'APP_ENV' => 'production',
     'APP_URL' => 'https://app.scrutium.com',
-    'MAIL_MAILER' => 'log',
-    'MAIL_FROM_ADDRESS' => 'hello@app.scrutium.com',
+    'MAIL_MAILER' => 'resend',
+    'MAIL_FROM_ADDRESS' => 'no-reply@app.scrutium.com',
     'MAIL_FROM_NAME' => 'Scrutium',
 ];
 foreach ($defaults as $key => $value) {
