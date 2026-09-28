@@ -104,7 +104,7 @@ Route::post('/debug/forgot-password', function (Request $request) {
             'trace' => $e->getTraceAsString(),
         ], 500);
     }
-})->middleware(['web', 'guest', 'throttle:6,1']);
+})->middleware(['web']); // guest removed for debugging
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/signin', [AuthController::class, 'showLogin'])->name('login');
