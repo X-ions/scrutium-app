@@ -67,7 +67,7 @@ return [
             'host' => env('RESEND_SMTP_HOST', 'smtp.resend.com'),
             'port' => (int) env('RESEND_SMTP_PORT', 465),
             'username' => env('RESEND_SMTP_USERNAME', 'resend'),
-            'password' => env('RESEND_KEY'),
+            'password' => env('RESEND_KEY') ?: env('RESEND_API_KEY'),
             'timeout' => null,
         ],
 
