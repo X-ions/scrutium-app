@@ -32,6 +32,18 @@ class PasswordResetController extends Controller
         } catch (Throwable $exception) {
             report($exception);
 
+            // Fallback: log the reset link instead of failing
+            if (config('mail.mailer') !== 'log') {
+                config(['mail.mailer' => 'log']);
+                try {
+                    Password::broker('users')->sendResetLink(
+                        $request->only('email')
+                    );
+                } catch (Throwable $e) {
+                    report($e);
+                }
+            }
+
             return back()->withErrors([
                 'email' => 'We could not send a reset link right now. Please try again shortly.',
             ]);
