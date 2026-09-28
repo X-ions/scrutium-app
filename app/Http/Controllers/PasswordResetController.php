@@ -26,38 +26,35 @@ class PasswordResetController extends Controller
         ]);
 
         try {
-            Password::broker('users')->sendResetLink(
+            $status = Password::broker('users')->sendResetLink(
                 $request->only('email')
-            );
-
-            return back()->with(
-                'status',
-                'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
             );
         } catch (Throwable $exception) {
             report($exception);
-
-            // Fallback: log the reset link instead of failing
-            if (config('mail.mailer') !== 'log') {
-                config(['mail.mailer' => 'log']);
-                try {
-                    Password::broker('users')->sendResetLink(
-                        $request->only('email')
-                    );
-
-                    return back()->with(
-                        'status',
-                        'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
-                    );
-                } catch (Throwable $e) {
-                    report($e);
-                }
-            }
 
             return back()->withErrors([
                 'email' => 'We could not send a reset link right now. Please try again shortly.',
             ]);
         }
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with(
+                'status',
+                'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
+            );
+        }
+
+        if ($status === Password::RESET_THROTTLED) {
+            return back()->withErrors([
+                'email' => 'Please wait a moment before requesting another reset link.',
+            ]);
+        }
+
+        // Keep the response generic when the address is not registered.
+        return back()->with(
+            'status',
+            'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
+        );
     }
 
     public function edit(Request $request, string $token): View
