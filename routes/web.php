@@ -104,6 +104,23 @@ Route::post('/debug/forgot-password', function (Request $request) {
             'trace' => $e->getTraceAsString(),
         ], 500);
     }
+})->middleware(['web']);
+
+Route::get('/debug/forgot-password', function (Request $request) {
+    try {
+        $request->merge(['email' => $request->query('email', 'test@example.com')]);
+        $controller = new \App\Http\Controllers\PasswordResetController();
+        $response = $controller->store($request);
+        return response()->json(['ok' => true, 'redirect' => $response->getTargetUrl()]);
+    } catch (Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+        ], 500);
+    }
 })->middleware(['web']); // guest removed for debugging
 
 Route::middleware('guest')->group(function (): void {
