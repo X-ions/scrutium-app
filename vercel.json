@@ -31,7 +31,7 @@
   "env": {
     "APP_NAME": "Scrutium",
     "APP_ENV": "production",
-    "APP_URL": "https://scrutium.vercel.app",
+    "APP_URL": "https://app.scrutium.com",
     "APP_CONFIG_CACHE": "/tmp/scrutium/config.php",
     "APP_EVENTS_CACHE": "/tmp/scrutium/events.php",
     "APP_PACKAGES_CACHE": "/tmp/scrutium/packages.php",
@@ -47,6 +47,9 @@
     "SESSION_DRIVER": "database",
     "SESSION_SECURE_COOKIE": "true",
     "LOG_CHANNEL": "stderr",
-    "QUEUE_CONNECTION": "sync"
+    "QUEUE_CONNECTION": "sync",
+    "MAIL_MAILER": "resend",
+    "MAIL_FROM_ADDRESS": "hello@app.scrutium.com",
+    "MAIL_FROM_NAME": "Scrutium"
   }
 }
