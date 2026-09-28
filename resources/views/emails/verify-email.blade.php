@@ -73,7 +73,7 @@
                                 </tr>
                                 <tr>
                                     <td style="border-top: 1px solid #e2e8f0; padding-top: 24px;" class="border-auto">
-                                        <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;" class="text-muted">&copy; {{ date('Y') }} Scrutium. All rights reserved.</p>
+                                        <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;" class="text-muted">&copy; {{ date('Y') }}/2026 X-ion, Inc. All Rights Reserved.</p>
                                     </td>
                                 </tr>
                             </table>

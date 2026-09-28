@@ -24,7 +24,7 @@
                 <h2 class="mt-4 text-4xl font-semibold leading-tight">Campaigns, proof, and performance in one workspace.</h2>
                 <p class="mt-4 text-base text-white/70">Monitor lifecycles, verify deliverables, and measure ROI from briefing through financial decision.</p>
             </div>
-            <p class="text-sm text-white/40">&copy; {{ date('Y') }} Scrutium</p>
+            <p class="text-sm text-white/40">&copy; {{ date('Y') }}/2026 X-ion, Inc. All Rights Reserved.</p>
         </aside>
         <main class="flex items-center justify-center px-6 py-12 {{ request()->routeIs('login') ? 'lg:order-1' : '' }}">
             <div class="w-full max-w-md">

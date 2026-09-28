@@ -281,7 +281,7 @@
                     <a href="{{ config('app.url') }}/signin">Sign in</a>
                     <a href="#">Support</a>
                 </div>
-                <div class="copyright">&copy; {{ date('Y') }} Scrutium. All rights reserved.</div>
+                <div class="copyright">&copy; {{ date('Y') }}/2026 X-ion, Inc. All Rights Reserved.</div>
             </div>
         </div>
     </div>
