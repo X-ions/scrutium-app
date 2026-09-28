@@ -6,8 +6,10 @@ use App\Database\Connections\PostgresConnection;
 use App\Support\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Connection;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -67,6 +69,22 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('*', function ($view) {
             $view->with('workspace', TenantContext::tenant());
+        });
+
+        RateLimiter::for('auth', function (Request $request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(6)
+                ->by($request->ip())
+                ->response(function () {
+                    return response()->json(['message' => 'Too many requests. Please try again later.'], 429);
+                });
+        });
+
+        RateLimiter::for('password-reset', function (Request $request) {
+            return \Illuminate\Cache\RateLimiting\Limit::perMinute(6)
+                ->by($request->ip())
+                ->response(function () {
+                    return response()->json(['message' => 'Too many requests. Please try again later.'], 429);
+                });
         });
 
         $autoMigrate = filter_var(env('SCRUTIUM_AUTO_MIGRATE', true), FILTER_VALIDATE_BOOLEAN);
