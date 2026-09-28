@@ -1,7 +1,9 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\WelcomeAccount;
 use App\Support\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -131,6 +133,57 @@ it('registers a workspace and authenticates its owner', function () {
     $user = User::where('email', 'owner@example.test')->firstOrFail();
     expect($user->tenant->slug)->toBe('example-collective')
         ->and($user->canManageWorkspace())->toBeTrue();
+});
+
+it('sends a welcome email with account details after workspace signup', function () {
+    Notification::fake();
+
+    $this->post('/register', [
+        'name' => 'Workspace Owner',
+        'email' => 'welcome-owner@example.test',
+        'password' => 'correct-horse-battery-staple',
+        'password_confirmation' => 'correct-horse-battery-staple',
+        'workspace_name' => 'Welcome Collective',
+        'workspace_slug' => 'welcome-collective',
+    ])->assertRedirect(route('verification.notice'));
+
+    $user = User::where('email', 'welcome-owner@example.test')->firstOrFail();
+
+    Notification::assertSentTo($user, WelcomeAccount::class, function (WelcomeAccount $notification) use ($user): bool {
+        $mail = $notification->toMail($user);
+
+        return $mail->view === 'emails.welcome'
+            && $mail->viewData === [
+                'workspace_name' => 'Welcome Collective',
+                'user_name' => 'Workspace Owner',
+                'user_id' => $user->id,
+            ];
+    });
+});
+
+it('sends a welcome email when a workspace adds a team member', function () {
+    Notification::fake();
+    $owner = User::factory()->owner()->create();
+    $owner->tenant->update(['name' => 'Team Workspace']);
+
+    $this->actingAs($owner)
+        ->post(route('settings.members.store'), [
+            'name' => 'Taylor Member',
+            'email' => 'team-member@example.test',
+            'role' => UserRole::Viewer->value,
+            'temporary_password' => 'a-temporary-passphrase',
+        ])
+        ->assertRedirect();
+
+    $member = User::where('email', 'team-member@example.test')->firstOrFail();
+
+    Notification::assertSentTo($member, WelcomeAccount::class, function (WelcomeAccount $notification) use ($member): bool {
+        return $notification->toMail($member)->viewData === [
+            'workspace_name' => 'Team Workspace',
+            'user_name' => 'Taylor Member',
+            'user_id' => $member->id,
+        ];
+    });
 });
 
 it('shows the workspace owner summary in the sidebar', function () {

@@ -7,6 +7,7 @@ use App\Models\AlertSubscription;
 use App\Models\ScoreConfig;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\WelcomeAccount;
 use App\Support\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -106,6 +107,7 @@ class AuthController extends Controller
         }
 
         $user->sendEmailVerificationNotification();
+        $user->notify(new WelcomeAccount);
 
         return redirect()->route('verification.notice')
             ->with('success', 'Your workspace is ready! Please verify your email address to continue.');
