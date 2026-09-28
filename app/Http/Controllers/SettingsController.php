@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\AlertSubscription;
 use App\Models\User;
+use App\Notifications\WelcomeAccount;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -46,7 +47,7 @@ class SettingsController extends Controller
             'job_title' => ['nullable', 'string', 'max:120'],
         ]);
 
-        User::create([
+        $member = User::create([
             'tenant_id' => $request->user()->tenant_id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -54,6 +55,7 @@ class SettingsController extends Controller
             'role' => $data['role'],
             'job_title' => $data['job_title'] ?? null,
         ]);
+        $member->notify(new WelcomeAccount);
 
         return back()->with('success', 'Team member added. Share the temporary password securely.');
     }
