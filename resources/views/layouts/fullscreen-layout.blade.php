@@ -17,7 +17,7 @@
 </head>
 <body class="min-h-screen bg-gray-50 font-outfit text-gray-800 dark:bg-gray-900 dark:text-white/90">
     <div class="grid min-h-screen lg:grid-cols-2">
-        <aside class="relative hidden overflow-hidden bg-[#0B1B33] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <aside class="relative hidden overflow-hidden bg-[#0B1B33] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between {{ request()->routeIs('login') ? 'lg:order-2' : '' }}">
             <x-brand-logo size="lg" wordmarkClass="text-white" />
             <div class="max-w-md">
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300">Influencer intelligence</p>
@@ -26,7 +26,7 @@
             </div>
             <p class="text-sm text-white/40">&copy; {{ date('Y') }} Scrutium</p>
         </aside>
-        <main class="flex items-center justify-center px-6 py-12">
+        <main class="flex items-center justify-center px-6 py-12 {{ request()->routeIs('login') ? 'lg:order-1' : '' }}">
             <div class="w-full max-w-md">
                 <div class="mb-8 lg:hidden">
                     <x-brand-logo wordmarkClass="text-gray-900 dark:text-white" />
