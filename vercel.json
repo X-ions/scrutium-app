@@ -50,7 +50,7 @@
     "LOG_CHANNEL": "stderr",
     "QUEUE_CONNECTION": "sync",
     "MAIL_MAILER": "resend",
-    "MAIL_FROM_ADDRESS": "hello@app.scrutium.com",
+    "MAIL_FROM_ADDRESS": "no-reply@app.scrutium.com",
     "MAIL_FROM_NAME": "Scrutium"
   }
 }
