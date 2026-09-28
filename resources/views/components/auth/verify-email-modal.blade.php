@@ -51,7 +51,7 @@
             </form>
             
             <p class="text-center text-xs text-gray-500 dark:text-gray-400">
-                The link expires in 60 minutes. If you no longer have access to this email,
+                The link expires in 24 hours. If you no longer have access to this email,
                 please contact support.
             </p>
         </div>

@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Database\Connections\PostgresConnection;
 use App\Support\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
@@ -62,6 +64,16 @@ class AppServiceProvider extends ServiceProvider
                 ->from(config('mail.from.address'), config('mail.from.name'))
                 ->subject('Reset your Scrutium password')
                 ->view('emails.password-reset', ['url' => $url]);
+        });
+
+        VerifyEmail::toMailUsing(function (object $notifiable, string $url): MailMessage {
+            return (new MailMessage)
+                ->from(config('mail.from.address'), config('mail.from.name'))
+                ->subject('Verify your email for Scrutium')
+                ->view('emails.verify-email', [
+                    'first_name' => Str::before(trim((string) $notifiable->name), ' '),
+                    'url' => $url,
+                ]);
         });
 
         View::composer('*', function ($view) {

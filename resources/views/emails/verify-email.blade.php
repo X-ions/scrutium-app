@@ -53,21 +53,22 @@
                                 <tr>
                                     <td style="border-top: 1px solid #e2e8f0; padding-top: 32px;" class="border-auto">
                                         <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;" class="text-auto">Verify your email address</h1>
-                                        <p style="margin: 0 0 24px; font-size: 16px; color: #475569;" class="text-muted">Thanks for creating your Scrutium workspace! Please verify your email address to get started.</p>
+                                        <p style="margin: 0 0 24px; font-size: 16px; color: #475569;" class="text-muted">Hi {{ $first_name }},</p>
+                                        <p style="margin: 0 0 24px; font-size: 16px; color: #475569;" class="text-muted">Thanks for signing up for Scrutium. Please confirm your email address to finish setting up your account.</p>
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
                                             <tr>
                                                 <td align="center">
                                                     <a href="{{ $url }}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4);" class="btn-primary">
-                                                        Verify email address
+                                                        Verify Email Address
                                                     </a>
                                                 </td>
                                             </tr>
                                         </table>
-                                        <p style="margin: 0 0 8px; font-size: 14px; color: #64748b;" class="text-muted">Or copy this link into your browser:</p>
+                                        <p style="margin: 0 0 8px; font-size: 14px; color: #64748b;" class="text-muted">If the button does not work, copy and paste this link into your web browser:</p>
                                         <p style="margin: 0 0 24px; font-size: 13px; color: #3b82f6; word-break: break-all; font-family: monospace;" class="text-muted">{{ $url }}</p>
                                         <hr style="margin: 24px 0; border: none; border-top: 1px solid #e2e8f0;" class="border-auto">
-                                        <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;" class="text-muted"><strong>Security note:</strong> This link expires in 60 minutes.</p>
-                                        <p style="margin: 0; font-size: 13px; color: #64748b;" class="text-muted">If you didn't create a Scrutium account, please ignore this email.</p>
+                                        <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;" class="text-muted"><strong>Security note:</strong> This link expires in 24 hours.</p>
+                                        <p style="margin: 0; font-size: 13px; color: #64748b;" class="text-muted">If you did not create a Scrutium account, you can safely ignore this email.</p>
                                     </td>
                                 </tr>
                                 <tr>
