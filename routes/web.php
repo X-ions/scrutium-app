@@ -57,6 +57,22 @@ Route::get('/debug/auth', function () {
     ]);
 })->middleware('web');
 
+Route::get('/debug/dashboard', function (Request $request) {
+    try {
+        $controller = new \App\Http\Controllers\DashboardController();
+        $response = $controller->index($request);
+        return response()->json(['ok' => true, 'view' => get_class($response)]);
+    } catch (Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+        ], 500);
+    }
+})->middleware(['web', 'auth', 'tenant']);
+
 Route::middleware('guest')->group(function (): void {
     Route::get('/signin', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
