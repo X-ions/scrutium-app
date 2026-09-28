@@ -18,6 +18,7 @@ use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Http\Request;
 
 Route::get('/health/db', function () {
     try {
