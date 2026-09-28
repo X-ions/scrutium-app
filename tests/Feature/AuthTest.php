@@ -42,7 +42,7 @@ it('sends and accepts a password reset link', function () {
     Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user, &$token): bool {
         $token = $notification->token;
 
-        return $notification->toMail($user)->actionUrl === route('password.reset', [
+        return $notification->toMail($user)->viewData['url'] === route('password.reset', [
             'token' => $token,
             'email' => $user->email,
         ]);
