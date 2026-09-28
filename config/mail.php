@@ -62,7 +62,13 @@ return [
         ],
 
         'resend' => [
-            'transport' => 'resend',
+            'transport' => 'smtp',
+            'scheme' => 'smtps',
+            'host' => env('RESEND_SMTP_HOST', 'smtp.resend.com'),
+            'port' => (int) env('RESEND_SMTP_PORT', 465),
+            'username' => env('RESEND_SMTP_USERNAME', 'resend'),
+            'password' => env('RESEND_KEY'),
+            'timeout' => null,
         ],
 
         'sendmail' => [

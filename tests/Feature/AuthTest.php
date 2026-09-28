@@ -7,6 +7,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 
 uses(RefreshDatabase::class);
 
@@ -17,6 +18,16 @@ it('renders the authentication pages', function () {
     $this->get('/signin')->assertOk();
     $this->get('/signup')->assertOk();
     $this->get(route('password.request'))->assertOk();
+});
+
+it('configures Resend through the built-in SMTP transport', function () {
+    expect(config('mail.mailers.resend'))->toMatchArray([
+        'transport' => 'smtp',
+        'scheme' => 'smtps',
+        'host' => 'smtp.resend.com',
+        'port' => 465,
+        'username' => 'resend',
+    ]);
 });
 
 it('sends and accepts a password reset link', function () {
@@ -51,6 +62,35 @@ it('sends and accepts a password reset link', function () {
 
     $this->assertAuthenticatedAs($user);
     expect(Hash::check($newPassword, $user->fresh()->password))->toBeTrue();
+});
+
+it('shows a generic error when password reset email delivery fails', function () {
+    $broker = Mockery::mock();
+    $broker->shouldReceive('sendResetLink')
+        ->once()
+        ->with(['email' => 'reset@example.test'])
+        ->andThrow(new RuntimeException('Resend API key is missing'));
+
+    Password::shouldReceive('broker')
+        ->once()
+        ->with('users')
+        ->andReturn($broker);
+
+    $this->from(route('password.request'))
+        ->post(route('password.email'), ['email' => 'reset@example.test'])
+        ->assertRedirect(route('password.request'))
+        ->assertSessionHasErrors([
+            'email' => 'We could not send a reset link right now. Please try again shortly.',
+        ]);
+});
+
+it('does not expose diagnostic routes', function () {
+    $this->get('/health/db')->assertNotFound();
+    $this->get('/debug/auth')->assertNotFound();
+    $this->get('/debug/dashboard')->assertNotFound();
+    $this->get('/debug/dashboard-render')->assertNotFound();
+    $this->get('/debug/forgot-password')->assertNotFound();
+    $this->post('/debug/forgot-password')->assertNotFound();
 });
 
 it('registers a workspace and authenticates its owner', function () {

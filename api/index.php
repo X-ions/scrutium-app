@@ -4,8 +4,8 @@
  * Vercel serverless entrypoint for Laravel (vercel-php).
  * Must run before public/index.php so cache/storage paths are writable.
  */
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
 
 $tmp = '/tmp/scrutium';
@@ -38,7 +38,7 @@ $forced = [
     'APP_MAINTENANCE_STORE' => 'array',
     'QUEUE_CONNECTION' => 'sync',
     'LOG_CHANNEL' => 'stderr',
-    'LOG_LEVEL' => 'debug',
+    'LOG_LEVEL' => 'warning',
 ];
 foreach ($forced as $key => $value) {
     putenv("{$key}={$value}");
@@ -103,33 +103,20 @@ if (! is_file($tmp.'/packages.php')) {
 }
 
 if (empty(getenv('APP_KEY'))) {
+    error_log('Scrutium configuration error: APP_KEY is not set.');
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
-    echo "SCRUTIUM CONFIG ERROR\n\n";
-    echo "APP_KEY environment variable is required but not set.\n";
-    echo "Generate a key locally with: php artisan key:generate --show\n";
-    echo "Then add it to your Vercel project environment variables.\n";
+    echo "Service temporarily unavailable.\n";
     exit(1);
 }
 
 try {
     require __DIR__.'/../public/index.php';
 } catch (Throwable $e) {
+    error_log((string) $e);
     http_response_code(500);
     header('Content-Type: text/plain; charset=utf-8');
-    echo "SCRUTIUM BOOT ERROR\n\n";
-    $current = $e;
-    $i = 0;
-    while ($current && $i < 5) {
-        echo "--- Exception #{$i} ---\n";
-        echo $current::class.': '.$current->getMessage()."\n";
-        echo $current->getFile().':'.$current->getLine()."\n\n";
-        if ($i === 0) {
-            echo $current->getTraceAsString()."\n\n";
-        }
-        $current = $current->getPrevious();
-        $i++;
-    }
+    echo "Service temporarily unavailable.\n";
 }
 
 function scrutium_putenv(string $key, string $value): void

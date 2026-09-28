@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class PasswordResetController extends Controller
 {
@@ -24,9 +25,17 @@ class PasswordResetController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        Password::broker('users')->sendResetLink(
-            $request->only('email')
-        );
+        try {
+            Password::broker('users')->sendResetLink(
+                $request->only('email')
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors([
+                'email' => 'We could not send a reset link right now. Please try again shortly.',
+            ]);
+        }
 
         return back()->with(
             'status',

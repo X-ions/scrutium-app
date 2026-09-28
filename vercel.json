@@ -31,6 +31,7 @@
   "env": {
     "APP_NAME": "Scrutium",
     "APP_ENV": "production",
+    "APP_DEBUG": "false",
     "APP_URL": "https://app.scrutium.com",
     "APP_CONFIG_CACHE": "/tmp/scrutium/config.php",
     "APP_EVENTS_CACHE": "/tmp/scrutium/events.php",
