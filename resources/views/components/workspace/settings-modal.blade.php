@@ -32,7 +32,20 @@
         errorMessage: '',
         fieldErrors: {},
         saveTimer: null,
-        openSettings() {
+        popoverTop: 0,
+        popoverLeft: 0,
+        openSettings(anchor) {
+            const bounds = anchor.getBoundingClientRect();
+            const popoverWidth = Math.min(380, window.innerWidth - 16);
+            const popoverHeight = Math.min(window.innerHeight * 0.72, 600);
+            let left = bounds.right;
+
+            if (left + popoverWidth > window.innerWidth - 8) {
+                left = bounds.left - popoverWidth;
+            }
+
+            this.popoverLeft = Math.max(8, left);
+            this.popoverTop = Math.max(8, Math.min(bounds.top, window.innerHeight - popoverHeight - 8));
             this.isOpen = true;
             this.successMessage = '';
             this.errorMessage = '';
@@ -121,19 +134,19 @@
                 : @js(asset('images/flag-us.svg'));
         },
     }"
-    @workspace-settings-open.window="openSettings()"
+    @workspace-settings-open.window="openSettings($event.detail.anchor)"
     @keydown.escape.window="closeSettings()"
-    x-effect="document.body.classList.toggle('overflow-hidden', isOpen)">
-    <div x-cloak x-show="isOpen" x-transition.opacity
-        class="fixed inset-0 z-999999 flex items-center justify-center bg-gray-950/50 p-3 backdrop-blur-sm sm:p-6"
-        @click.self="closeSettings()">
-        <section x-show="isOpen" x-transition.scale.origin.top
-            class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-xl dark:border-gray-700 dark:bg-gray-900"
-            role="dialog" aria-modal="true" aria-labelledby="workspace-settings-title">
-            <header class="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-6">
+    >
+    <div x-cloak x-show="isOpen" x-transition.origin.top.left
+        :style="{ top: popoverTop + 'px', left: popoverLeft + 'px' }"
+        @click.outside="closeSettings()"
+        class="fixed z-999999 w-[min(380px,calc(100vw-16px))]">
+        <section class="flex max-h-[min(72vh,600px)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xl dark:border-gray-700 dark:bg-gray-900"
+            role="dialog" aria-modal="false" aria-labelledby="workspace-settings-title">
+            <header class="flex items-start justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-blue-light-600 dark:text-blue-light-300">{{ __('Workspace') }}</p>
-                    <h2 id="workspace-settings-title" class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{{ __('Workspace settings') }}</h2>
+                    <h2 id="workspace-settings-title" class="mt-1 text-base font-semibold text-gray-900 dark:text-white">{{ __('Workspace settings') }}</h2>
                 </div>
                 <button type="button" x-ref="closeButton" @click="closeSettings()"
                     class="grid size-8 shrink-0 place-items-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
@@ -150,10 +163,10 @@
                 @csrf
                 @method('PATCH')
                 <input type="hidden" name="timezone" value="{{ $workspace->timezone }}">
-                <div class="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-5 sm:px-6">
+                <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
                     <section>
-                        <h3 class="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{{ __('General') }}</h3>
-                        <div class="space-y-5">
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{{ __('General') }}</h3>
+                        <div class="space-y-4">
                             <div>
                                 <label for="workspace-name" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Workspace Name') }}</label>
                                 <input id="workspace-name" name="name" value="{{ $workspace->name }}" required maxlength="120"
@@ -170,7 +183,7 @@
 
                             <div>
                                 <label for="workspace-description" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Workspace Description') }}</label>
-                                <textarea id="workspace-description" name="description" rows="3" maxlength="1000"
+                                <textarea id="workspace-description" name="description" rows="2" maxlength="1000"
                                     placeholder="{{ __('Add a short description of this workspace.') }}"
                                     class="w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-white">{{ $workspace->description }}</textarea>
                                 @if (! $workspace->description)
@@ -198,7 +211,7 @@
                                 <p x-show="fieldErrors.logo" x-text="fieldErrors.logo?.[0]" class="mt-1 text-xs text-error-600" role="alert"></p>
                             </div>
 
-                            <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="grid gap-3">
                                 <div>
                                     <label for="workspace-currency" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Default Currency') }}</label>
                                     <div class="flex gap-2">
@@ -233,9 +246,9 @@
                         </div>
                     </section>
 
-                    <section class="border-t border-gray-200 pt-5 dark:border-gray-800">
-                        <h3 class="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{{ __('Preferences') }}</h3>
-                        <div class="space-y-4">
+                    <section class="border-t border-gray-200 pt-4 dark:border-gray-800">
+                        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{{ __('Preferences') }}</h3>
+                        <div class="space-y-3">
                             <div class="flex items-center justify-between gap-4">
                                 <div>
                                     <p class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ __('Security Alerts') }}</p>
@@ -279,7 +292,7 @@
                     <p x-show="errorMessage" x-text="errorMessage" class="rounded-md bg-error-50 px-3 py-2 text-sm text-error-700 dark:bg-error-500/10 dark:text-error-300" role="alert"></p>
                 </div>
 
-                <footer class="flex items-center justify-between gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-6">
+                <footer class="flex items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 dark:border-gray-800">
                     <span x-show="autoSave" class="text-xs text-gray-500 dark:text-gray-400">{{ __('Changes save automatically.') }}</span>
                     <span x-show="!autoSave" class="text-xs text-gray-500 dark:text-gray-400">{{ __('Changes are not saved until you save.') }}</span>
                     <button type="submit" :disabled="saving" class="inline-flex h-10 min-w-28 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-400">

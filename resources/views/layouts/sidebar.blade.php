@@ -83,7 +83,7 @@
                         class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
                         aria-label="{{ __('Open workspace settings') }}"
                         title="{{ __('Workspace settings') }}"
-                        @click="$dispatch('workspace-settings-open')">
+                        @click="$dispatch('workspace-settings-open', { anchor: $el })">
                         <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                             <path d="M10 2.25a2.1 2.1 0 0 1 2.05 1.65l.13.57c.38.13.74.34 1.06.61l.56-.19a2.1 2.1 0 0 1 2.52 1.02 2.1 2.1 0 0 1-.5 2.67l-.44.38c.07.41.07.82 0 1.23l.44.38a2.1 2.1 0 0 1 .5 2.67 2.1 2.1 0 0 1-2.52 1.02l-.56-.19c-.32.27-.68.48-1.06.61l-.13.57A2.1 2.1 0 0 1 10 16.9a2.1 2.1 0 0 1-2.05-1.65l-.13-.57a4.1 4.1 0 0 1-1.06-.61l-.56.19a2.1 2.1 0 0 1-2.52-1.02 2.1 2.1 0 0 1 .5-2.67l.44-.38a3.7 3.7 0 0 1 0-1.23l-.44-.38a2.1 2.1 0 0 1-.5-2.67 2.1 2.1 0 0 1 2.52-1.02l.56.19c.32-.27.68-.48 1.06-.61l.13-.57A2.1 2.1 0 0 1 10 2.25Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" />
                             <circle cx="10" cy="9.55" r="2.2" stroke="currentColor" stroke-width="1.35" />
