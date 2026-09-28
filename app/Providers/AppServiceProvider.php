@@ -9,6 +9,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -60,11 +61,7 @@ class AppServiceProvider extends ServiceProvider
             return (new MailMessage)
                 ->from(config('mail.from.address'), config('mail.from.name'))
                 ->subject('Reset your Scrutium password')
-                ->greeting('Reset your password')
-                ->line('We received a request to reset the password for your Scrutium workspace.')
-                ->action('Choose a new password', $url)
-                ->line('This link expires in 60 minutes and can be used only once.')
-                ->line('If you did not request this, you can ignore this email.');
+                ->view('emails.password-reset', ['url' => $url]);
         });
 
         View::composer('*', function ($view) {
