@@ -98,18 +98,3 @@ Route::middleware(['auth', 'tenant', 'verified'])->group(function (): void {
 });
 
 Route::view('/error-404', 'pages.errors.error-404', ['title' => 'Error 404'])->name('error-404');
-
-// Debug routes (remove in production)
-Route::get('/debug/mail', function () {
-    return response()->json([
-        'mail_mailer' => config('mail.default'),
-        'mail_from_address' => config('mail.from.address'),
-        'mail_from_name' => config('mail.from.name'),
-        'resend_key_set' => !empty(config('mail.mailers.resend.password')),
-        'resend_key_prefix' => config('mail.mailers.resend.password') ? substr(config('mail.mailers.resend.password'), 0, 4) : null,
-        'env_mail_mailer' => env('MAIL_MAILER'),
-        'env_resend_key' => env('RESEND_KEY') ? substr(env('RESEND_KEY'), 0, 4) : null,
-        'env_mail_from' => env('MAIL_FROM_ADDRESS'),
-        'app_url' => config('app.url'),
-    ]);
-})->middleware('auth');

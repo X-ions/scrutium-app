@@ -10,11 +10,9 @@
         this.dropdownOpen = false;
     },
     handleItemClick() {
-        console.log('Notification item clicked');
         this.closeDropdown();
     },
     handleViewAllClick() {
-        console.log('View All Notifications clicked');
         this.closeDropdown();
     }
 }" @click.away="closeDropdown()">
@@ -90,89 +88,89 @@
         <!-- Notification List -->
         <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
             @php
-                $notifications = [
-                    [
-                        'id' => 1,
-                        'userName' => 'Terry Franci',
-                        'userImage' => '/images/user/user-02.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Nganter App',
-                        'type' => 'Project',
-                        'time' => '5 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 2,
-                        'userName' => 'Alex Johnson',
-                        'userImage' => '/images/user/user-03.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Nganter App',
-                        'type' => 'Project',
-                        'time' => '10 min ago',
-                        'status' => 'offline',
-                    ],
-                    [
-                        'id' => 3,
-                        'userName' => 'Sarah Williams',
-                        'userImage' => '/images/user/user-04.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Dashboard UI',
-                        'type' => 'Project',
-                        'time' => '15 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 4,
-                        'userName' => 'Mike Brown',
-                        'userImage' => '/images/user/user-05.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - E-commerce',
-                        'type' => 'Project',
-                        'time' => '20 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 5,
-                        'userName' => 'Emma Davis',
-                        'userImage' => '/images/user/user-06.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Mobile App',
-                        'type' => 'Project',
-                        'time' => '25 min ago',
-                        'status' => 'offline',
-                    ],
-                    [
-                        'id' => 6,
-                        'userName' => 'John Smith',
-                        'userImage' => '/images/user/user-07.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Landing Page',
-                        'type' => 'Project',
-                        'time' => '30 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 7,
-                        'userName' => 'Lisa Anderson',
-                        'userImage' => '/images/user/user-08.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - Blog System',
-                        'type' => 'Project',
-                        'time' => '35 min ago',
-                        'status' => 'online',
-                    ],
-                    [
-                        'id' => 8,
-                        'userName' => 'David Wilson',
-                        'userImage' => '/images/user/user-09.jpg',
-                        'action' => 'requests permission to change',
-                        'project' => 'Project - CRM Dashboard',
-                        'type' => 'Project',
-                        'time' => '40 min ago',
-                        'status' => 'online',
-                    ],
-                ];
-            @endphp
+            $notifications = [
+                [
+                    'id' => 1,
+                    'userName' => 'Terry Franci',
+                    'userImage' => '/images/user/user-02.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - Nganter App',
+                    'type' => 'Project',
+                    'time' => '5 min ago',
+                    'status' => 'online',
+                ],
+                [
+                    'id' => 2,
+                    'userName' => 'Alex Johnson',
+                    'userImage' => '/images/user/user-03.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - Nganter App',
+                    'type' => 'Project',
+                    'time' => '10 min ago',
+                    'status' => 'offline',
+                ],
+                [
+                    'id' => 3,
+                    'userName' => 'Sarah Williams',
+                    'userImage' => '/images/user/user-04.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - Dashboard UI',
+                    'type' => 'Project',
+                    'time' => '15 min ago',
+                    'status' => 'online',
+                ],
+                [
+                    'id' => 4,
+                    'userName' => 'Mike Brown',
+                    'userImage' => '/images/user/user-05.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - E-commerce',
+                    'type' => 'Project',
+                    'time' => '20 min ago',
+                    'status' => 'online',
+                ],
+                [
+                    'id' => 5,
+                    'userName' => 'Emma Davis',
+                    'userImage' => '/images/user/user-06.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - Mobile App',
+                    'type' => 'Project',
+                    'time' => '25 min ago',
+                    'status' => 'offline',
+                ],
+                [
+                    'id' => 6,
+                    'userName' => 'John Smith',
+                    'userImage' => '/images/user/user-07.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - Landing Page',
+                    'type' => 'Project',
+                    'time' => '30 min ago',
+                    'status' => 'online',
+                ],
+                [
+                    'id' => 7,
+                    'userName' => 'Lisa Anderson',
+                    'userImage' => '/images/user/user-08.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - Blog System',
+                    'type' => 'Project',
+                    'time' => '35 min ago',
+                    'status' => 'online',
+                ],
+                [
+                    'id' => 8,
+                    'userName' => 'David Wilson',
+                    'userImage' => '/images/user/user-09.jpg',
+                    'action' => 'requests permission to change',
+                    'project' => 'Project - CRM Dashboard',
+                    'type' => 'Project',
+                    'time' => '40 min ago',
+                    'status' => 'online',
+                ],
+            ];
+        @endphp
 
             @foreach ($notifications as $notification)
                 <li @click="handleItemClick()">
