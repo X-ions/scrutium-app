@@ -38,9 +38,24 @@ Route::get('/health/db', function () {
             'ok' => false,
             'driver' => config('database.default'),
             'pdo_pgsql' => extension_loaded('pdo_pgsql'),
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
         ], 500);
     }
 });
+
+Route::get('/debug/auth', function () {
+    return response()->json([
+        'auth_check' => auth()->check(),
+        'user' => auth()->user() ? [
+            'id' => auth()->user()->id,
+            'email' => auth()->user()->email,
+            'tenant_id' => auth()->user()->tenant_id,
+            'tenant' => auth()->user()->tenant ? 'exists' : 'null',
+        ] : null,
+        'session_id' => session()->getId(),
+    ]);
+})->middleware('web');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/signin', [AuthController::class, 'showLogin'])->name('login');
