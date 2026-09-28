@@ -3,7 +3,10 @@
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantContext;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
@@ -13,6 +16,41 @@ afterEach(fn () => TenantContext::forget());
 it('renders the authentication pages', function () {
     $this->get('/signin')->assertOk();
     $this->get('/signup')->assertOk();
+    $this->get(route('password.request'))->assertOk();
+});
+
+it('sends and accepts a password reset link', function () {
+    Notification::fake();
+    $user = User::factory()->create(['email' => 'reset@example.test']);
+    $token = null;
+
+    $this->post(route('password.email'), ['email' => $user->email])
+        ->assertRedirect()
+        ->assertSessionHas('status');
+
+    Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user, &$token): bool {
+        $token = $notification->token;
+
+        return $notification->toMail($user)->actionUrl === route('password.reset', [
+            'token' => $token,
+            'email' => $user->email,
+        ]);
+    });
+
+    $this->get(route('password.reset', ['token' => $token, 'email' => $user->email]))
+        ->assertOk();
+
+    $newPassword = 'a-secure-new-password';
+    $this->post(route('password.update'), [
+        'token' => $token,
+        'email' => $user->email,
+        'password' => $newPassword,
+        'password_confirmation' => $newPassword,
+    ])->assertRedirect(route('dashboard'))
+        ->assertSessionHas('success');
+
+    $this->assertAuthenticatedAs($user);
+    expect(Hash::check($newPassword, $user->fresh()->password))->toBeTrue();
 });
 
 it('registers a workspace and authenticates its owner', function () {
