@@ -4,6 +4,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -28,6 +29,27 @@ it('configures Resend through the built-in SMTP transport', function () {
         'port' => 465,
         'username' => 'resend',
     ]);
+});
+
+it('sends the branded verification email with a 24-hour signed link', function () {
+    Notification::fake();
+    $user = User::factory()->unverified()->create([
+        'name' => 'Avery Stone',
+        'email' => 'verify@example.test',
+    ]);
+
+    $user->sendEmailVerificationNotification();
+
+    Notification::assertSentTo($user, VerifyEmail::class, function (VerifyEmail $notification) use ($user): bool {
+        $mail = $notification->toMail($user);
+        $url = $mail->viewData['url'];
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+
+        return $mail->subject === 'Verify your email for Scrutium'
+            && $mail->view === 'emails.verify-email'
+            && $mail->viewData['first_name'] === 'Avery'
+            && (int) ($query['expires'] ?? 0) === now()->addHours(24)->timestamp;
+    });
 });
 
 it('sends and accepts a password reset link', function () {
