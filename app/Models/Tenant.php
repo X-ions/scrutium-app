@@ -29,7 +29,6 @@ class Tenant extends Model
         'auto_save',
     ];
 
-<<<<<<< Updated upstream
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -38,13 +37,13 @@ class Tenant extends Model
             'compact_layout' => 'boolean',
             'auto_save' => 'boolean',
         ];
-=======
+    }
+
     public function setNameAttribute(string $value): void
     {
         $name = trim($value);
         $this->attributes['name'] = $name;
         $this->attributes['name_key'] = mb_strtolower($name);
->>>>>>> Stashed changes
     }
 
     public function users(): HasMany

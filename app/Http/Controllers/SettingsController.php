@@ -7,11 +7,8 @@ use App\Models\AlertSubscription;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\WelcomeAccount;
-<<<<<<< Updated upstream
-use Illuminate\Http\JsonResponse;
-=======
 use Illuminate\Database\QueryException;
->>>>>>> Stashed changes
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -55,7 +52,6 @@ class SettingsController extends Controller
             'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-<<<<<<< Updated upstream
         $workspace = $request->user()->tenant;
         if ($workspace->name !== $data['name'] && $workspace->name_updated_at?->copy()->addDays(7)->isFuture()) {
             return back()->withErrors([
@@ -83,7 +79,20 @@ class SettingsController extends Controller
             $changes['logo_path'] = $request->file('logo')->storePublicly("workspaces/{$workspace->id}", $diskName);
         }
 
-        $workspace->update($changes);
+        try {
+            $workspace->update($changes);
+        } catch (QueryException $exception) {
+            if (Tenant::query()
+                ->where('name_key', mb_strtolower(trim($data['name'])))
+                ->where('id', '<>', $request->user()->tenant_id)
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'name' => 'That workspace name is already in use. Choose another name.',
+                ]);
+            }
+
+            throw $exception;
+        }
 
         if (isset($oldLogoPath)) {
             Storage::disk($diskName)->delete($oldLogoPath);
@@ -108,21 +117,6 @@ class SettingsController extends Controller
                     'logo_url' => $workspace->logo_path ? Storage::disk($diskName)->url($workspace->logo_path) : null,
                 ],
             ]);
-=======
-        try {
-            $request->user()->tenant->update($data);
-        } catch (QueryException $exception) {
-            if (Tenant::query()
-                ->where('name_key', mb_strtolower(trim($data['name'])))
-                ->where('id', '<>', $request->user()->tenant_id)
-                ->exists()) {
-                throw ValidationException::withMessages([
-                    'name' => 'That workspace name is already in use. Choose another name.',
-                ]);
-            }
-
-            throw $exception;
->>>>>>> Stashed changes
         }
 
         return back()->with('success', 'Workspace settings updated.');
