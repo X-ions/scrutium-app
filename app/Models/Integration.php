@@ -7,6 +7,7 @@ use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Integration extends Model
 {
@@ -24,6 +25,8 @@ class Integration extends Model
         'auto_verify',
         'last_synced_at',
         'last_error',
+        'scope',
+        'campaign_id',
     ];
 
     /**
@@ -107,5 +110,10 @@ class Integration extends Model
     public function scopeHealthy(Builder $query): Builder
     {
         return $query->where('status', IntegrationStatus::Connected->value);
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(Campaign::class);
     }
 }
