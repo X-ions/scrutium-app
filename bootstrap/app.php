@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => \App\Http\Middleware\ResolveTenant::class,
             'operate' => \App\Http\Middleware\EnsureCanOperate::class,
             'workspace-admin' => \App\Http\Middleware\EnsureWorkspaceAdministrator::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         ]);
 
         $middleware->web(append: [

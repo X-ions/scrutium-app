@@ -145,6 +145,9 @@
 </head>
 
 <body>
+    @if (auth()->check() && !auth()->user()->hasVerifiedEmail())
+        <x-auth.verify-email-modal :user="auth()->user()" />
+    @endif
 
     <div class="min-h-screen xl:flex sidebar-expanded" x-data :class="{ 'sidebar-expanded': $store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen }">
         @include('layouts.backdrop')

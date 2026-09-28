@@ -6,6 +6,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliverableController;
+use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\LocaleController;
@@ -29,7 +30,13 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:password-reset')->name('password.update');
 });
 
-Route::middleware(['auth', 'tenant'])->group(function (): void {
+Route::middleware(['auth'])->group(function (): void {
+    Route::get('/verify-email', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::post('/verify-email', [EmailVerificationController::class, 'send'])->middleware('throttle:6,1')->name('verification.send');
+    Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
+});
+
+Route::middleware(['auth', 'tenant', 'verified'])->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
         ->whereIn('locale', array_keys(LocaleController::SUPPORTED_LOCALES))

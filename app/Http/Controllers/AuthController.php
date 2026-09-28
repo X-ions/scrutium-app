@@ -40,6 +40,15 @@ class AuthController extends Controller
         $user = $request->user();
         $user->forceFill(['last_active_at' => now()])->save();
 
+        if (! $user->hasVerifiedEmail()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('verification.notice')
+                ->with('status', 'Please verify your email address before signing in.');
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 
@@ -105,11 +114,10 @@ class AuthController extends Controller
             TenantContext::forget();
         }
 
-        Auth::login($user);
-        $request->session()->regenerate();
-        $user->forceFill(['last_active_at' => now()])->save();
+        $user->sendEmailVerificationNotification();
 
-        return redirect()->route('dashboard')->with('success', 'Your workspace is ready.');
+        return redirect()->route('verification.notice')
+            ->with('success', 'Your workspace is ready! Please verify your email address to continue.');
     }
 
     public function logout(Request $request): RedirectResponse
