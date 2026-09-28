@@ -54,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
             ], false));
 
             return (new MailMessage)
+                ->from(config('mail.from.address'), config('mail.from.name'))
                 ->subject('Reset your Scrutium password')
                 ->greeting('Reset your password')
                 ->line('We received a request to reset the password for your Scrutium workspace.')
