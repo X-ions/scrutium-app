@@ -29,6 +29,11 @@ class PasswordResetController extends Controller
             Password::broker('users')->sendResetLink(
                 $request->only('email')
             );
+
+            return back()->with(
+                'status',
+                'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
+            );
         } catch (Throwable $exception) {
             report($exception);
 
@@ -39,6 +44,11 @@ class PasswordResetController extends Controller
                     Password::broker('users')->sendResetLink(
                         $request->only('email')
                     );
+
+                    return back()->with(
+                        'status',
+                        'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
+                    );
                 } catch (Throwable $e) {
                     report($e);
                 }
@@ -48,11 +58,6 @@ class PasswordResetController extends Controller
                 'email' => 'We could not send a reset link right now. Please try again shortly.',
             ]);
         }
-
-        return back()->with(
-            'status',
-            'If that email is in our system, we sent a reset link. It expires in 60 minutes.'
-        );
     }
 
     public function edit(Request $request, string $token): View
