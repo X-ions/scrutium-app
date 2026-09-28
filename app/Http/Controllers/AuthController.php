@@ -9,6 +9,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\WelcomeAccount;
 use App\Support\TenantContext;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -49,13 +51,39 @@ class AuthController extends Controller
         return view('pages.auth.signup', ['title' => 'Create workspace']);
     }
 
+    public function checkWorkspaceName(Request $request): JsonResponse
+    {
+        $name = trim((string) $request->query('name', ''));
+
+        if ($name === '' || mb_strlen($name) > 120) {
+            return response()->json(['available' => false]);
+        }
+
+        $query = Tenant::query()->where('name_key', mb_strtolower($name));
+
+        if ($tenantId = $request->user()?->tenant_id) {
+            $query->where('id', '<>', $tenantId);
+        }
+
+        return response()->json(['available' => ! $query->exists()]);
+    }
+
     public function register(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:12'],
-            'workspace_name' => ['required', 'string', 'max:120'],
+            'workspace_name' => [
+                'required',
+                'string',
+                'max:120',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (Tenant::query()->where('name_key', mb_strtolower(trim((string) $value)))->exists()) {
+                        $fail('That workspace name is already in use. Choose another name.');
+                    }
+                },
+            ],
             'workspace_slug' => ['nullable', 'string', 'max:80', 'alpha_dash'],
         ]);
 
@@ -102,6 +130,14 @@ class AuthController extends Controller
 
                 return $user;
             });
+        } catch (QueryException $exception) {
+            if (Tenant::query()->where('name_key', mb_strtolower(trim($data['workspace_name'])))->exists()) {
+                throw ValidationException::withMessages([
+                    'workspace_name' => 'That workspace name is already in use. Choose another name.',
+                ]);
+            }
+
+            throw $exception;
         } finally {
             TenantContext::forget();
         }

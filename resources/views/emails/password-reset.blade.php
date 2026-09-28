@@ -281,7 +281,8 @@
                     <a href="{{ config('app.url') }}/signin">Sign in</a>
                     <a href="#">Support</a>
                 </div>
-                <div class="copyright">&copy; {{ date('Y') }}/2026 X-ion, Inc. All Rights Reserved.</div>
+                <div class="footer-address" style="font-size: 12px; color: #94a3b8; margin-top: 12px;">X-ION, Inc. • Tom Mboya Street • Nairobi, Kenya • 1° 17' 31" S, 36° 49' 19" E</div>
+                <div class="copyright" style="font-size: 12px; color: #94a3b8; margin-top: 4px;">&copy; {{ date('Y') }} X-ION, Inc. All rights reserved.</div>
             </div>
         </div>
     </div>

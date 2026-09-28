@@ -192,6 +192,56 @@
   }
 }
 
+@keyframes auth-main-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes auth-aside-enter {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+[x-cloak] {
+  display: none !important;
+}
+
+.auth-transition-page main {
+  animation: auth-main-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-transition-page aside {
+  animation: auth-aside-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both;
+}
+
+@keyframes auth-main-leave {
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes auth-aside-leave {
+  to { opacity: 0; transform: translateX(10px); }
+}
+
+.auth-transition-page.is-leaving main {
+  animation: auth-main-leave 140ms ease-in forwards;
+}
+
+.auth-transition-page.is-leaving aside {
+  animation: auth-aside-leave 140ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-transition-page main,
+  .auth-transition-page aside {
+    animation: none;
+  }
+
+  .auth-transition-page.is-leaving main,
+  .auth-transition-page.is-leaving aside {
+    animation: none;
+  }
+}
+
 @utility menu-item {
   @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
 }

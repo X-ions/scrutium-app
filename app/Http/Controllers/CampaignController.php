@@ -36,12 +36,91 @@ class CampaignController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function tools(): View
     {
+        $activeCampaigns = Campaign::query()
+            ->where('status', CampaignStatus::Active->value)
+            ->orderBy('name')
+            ->get(['id', 'name', 'budget_total']);
+        $creators = Influencer::bookable()
+            ->orderByDesc('pulse_score')
+            ->limit(100)
+            ->get(['id', 'handle', 'full_name', 'platform', 'country', 'followers', 'engagement_rate', 'pulse_score', 'tier'])
+            ->map(fn (Influencer $creator): array => [
+                'id' => $creator->id,
+                'name' => $creator->displayName(),
+                'platform' => $creator->platform->value,
+                'platformName' => $creator->platform->label(),
+                'country' => $creator->country,
+                'followers' => $creator->followers,
+                'engagement' => (float) $creator->engagement_rate,
+                'pulse' => (float) ($creator->pulse_score ?? 0),
+                'tier' => $creator->tier->value,
+            ])->values();
+
+        return view('pages.scrutium.discover.campaign-tools', [
+            'title' => 'Campaign tools',
+            'activeCampaigns' => $activeCampaigns,
+            'creators' => $creators,
+            'platforms' => Platform::options(),
+            'countries' => $creators->pluck('country')->filter()->unique()->sort()->values(),
+        ]);
+    }
+
+    public function applyTools(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'campaign_id' => [
+                'required',
+                'integer',
+                Rule::exists('campaigns', 'id')
+                    ->where('tenant_id', $request->user()->tenant_id)
+                    ->where('status', CampaignStatus::Active->value),
+            ],
+            'objective' => ['nullable', 'string', 'max:180'],
+            'brief' => ['required', 'string', 'max:10000'],
+            'budget_total' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+        ]);
+
+        $campaign = Campaign::query()
+            ->where('tenant_id', $request->user()->tenant_id)
+            ->where('status', CampaignStatus::Active->value)
+            ->findOrFail($data['campaign_id']);
+
+        $updates = [
+            'objective' => $data['objective'] ?? $campaign->objective,
+            'brief' => $data['brief'],
+        ];
+
+        if (array_key_exists('budget_total', $data) && $data['budget_total'] !== null) {
+            $updates['budget_total'] = $data['budget_total'];
+        }
+
+        $campaign->update($updates);
+
+        return redirect()->route('campaigns.show', $campaign)
+            ->with('success', 'Campaign tools draft applied to '.$campaign->name.'.');
+    }
+
+    public function create(Request $request): View
+    {
+        $name = $request->query('name');
+        $objective = $request->query('objective');
+        $brief = $request->query('brief');
+        $budget = $request->query('budget_total');
+
         return view('pages.scrutium.campaigns.create', [
             'title' => 'New campaign',
             'stages' => CampaignStage::options(),
             'statuses' => CampaignStatus::options(),
+            'toolSeed' => [
+                'name' => Str::limit(is_string($name) ? trim($name) : '', 180, ''),
+                'objective' => Str::limit(is_string($objective) ? trim($objective) : '', 180, ''),
+                'brief' => Str::limit(is_string($brief) ? $brief : '', 10000, ''),
+                'budget_total' => is_numeric($budget)
+                    ? min(max((float) $budget, 0), 999999999)
+                    : 0,
+            ],
         ]);
     }
 

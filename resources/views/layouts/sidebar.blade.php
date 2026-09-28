@@ -173,7 +173,14 @@
             </div>
 
             <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <p class="font-medium text-gray-800 dark:text-white/90">Campaign tools</p>
+                <a href="{{ route('campaign-tools') }}" @class([
+                    'flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium transition-colors',
+                    'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' => request()->routeIs('campaign-tools'),
+                    'text-gray-700 hover:bg-white hover:text-brand-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-brand-300' => ! request()->routeIs('campaign-tools'),
+                ]) @if(request()->routeIs('campaign-tools')) aria-current="page" @endif>
+                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
+                    <span>Campaign tools</span>
+                </a>
                 <p class="font-medium text-gray-800 dark:text-white/90">Partner integrations</p>
                 <p class="font-medium text-gray-800 dark:text-white/90">Featured services</p>
                 <button type="button" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">

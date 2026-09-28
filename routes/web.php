@@ -18,6 +18,10 @@ use App\Http\Controllers\ScoringController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/workspace-name-availability', [AuthController::class, 'checkWorkspaceName'])
+    ->middleware('throttle:30,1')
+    ->name('workspace.name.availability');
+
 Route::middleware('guest')->group(function (): void {
     Route::get('/signin', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
@@ -47,6 +51,8 @@ Route::middleware(['auth', 'tenant', 'verified'])->group(function (): void {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     Route::middleware('operate')->group(function (): void {
+        Route::get('/discover/campaign-tools', [CampaignController::class, 'tools'])->name('campaign-tools');
+        Route::post('/discover/campaign-tools/apply', [CampaignController::class, 'applyTools'])->name('campaign-tools.apply');
         Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns');
         Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
         Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store');

@@ -15,7 +15,7 @@
         })();
     </script>
 </head>
-<body class="min-h-screen bg-gray-50 font-outfit text-gray-800 dark:bg-gray-900 dark:text-white/90">
+<body class="min-h-screen bg-gray-50 font-outfit text-gray-800 dark:bg-gray-900 dark:text-white/90 {{ request()->routeIs('login', 'signup') ? 'auth-transition-page' : '' }}">
     <div class="grid min-h-screen lg:grid-cols-2">
         <aside class="relative hidden overflow-hidden bg-[#0B1B33] px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between {{ request()->routeIs('login') ? 'lg:order-2' : '' }}">
             <x-brand-logo size="lg" wordmarkClass="text-white" />
@@ -35,6 +35,22 @@
             </div>
         </main>
     </div>
+    @if (request()->routeIs('login', 'signup'))
+        <script nonce="{{ $cspNonce }}">
+            document.addEventListener('click', function (event) {
+                const link = event.target.closest('a[data-auth-switch]');
+                if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    return;
+                }
+
+                event.preventDefault();
+                document.body.classList.add('is-leaving');
+                window.setTimeout(function () {
+                    window.location.assign(link.href);
+                }, 140);
+            });
+        </script>
+    @endif
     @stack('scripts')
 </body>
 </html>

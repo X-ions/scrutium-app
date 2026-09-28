@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Models\SecurityEvent;
+use App\Models\Device;
+use App\Models\TrustedDevice;
+use App\Models\UserSession;
+use App\Models\SecurityNotificationPreference;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -111,5 +117,45 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->avatar_path
             ? asset('storage/'.ltrim((string) $this->avatar_path, '/'))
             : null;
+    }
+
+    public function securityEvents(): HasMany
+    {
+        return $this->hasMany(SecurityEvent::class);
+    }
+
+    public function devices(): HasMany
+    {
+        return $this->hasMany(Device::class);
+    }
+
+    public function trustedDevices(): HasMany
+    {
+        return $this->hasMany(TrustedDevice::class);
+    }
+
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class);
+    }
+
+    public function securityNotificationPreference(): HasOne
+    {
+        return $this->hasOne(SecurityNotificationPreference::class);
+    }
+
+    public function currentSession(): HasOne
+    {
+        return $this->hasOne(UserSession::class)->where('is_current', true);
+    }
+
+    public function activeSessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class)
+            ->where('is_revoked', false)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+            });
     }
 }

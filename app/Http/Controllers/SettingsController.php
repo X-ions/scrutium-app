@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\AlertSubscription;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Notifications\WelcomeAccount;
+<<<<<<< Updated upstream
 use Illuminate\Http\JsonResponse;
+=======
+use Illuminate\Database\QueryException;
+>>>>>>> Stashed changes
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SettingsController extends Controller
@@ -29,7 +35,17 @@ class SettingsController extends Controller
     public function updateWorkspace(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
+            'name' => [
+                'required',
+                'string',
+                'max:120',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request): void {
+                    if (Tenant::query()->where('name_key', mb_strtolower(trim((string) $value)))
+                        ->where('id', '<>', $request->user()->tenant_id)->exists()) {
+                        $fail('That workspace name is already in use. Choose another name.');
+                    }
+                },
+            ],
             'timezone' => ['required', 'timezone'],
             'currency' => ['required', 'string', 'size:3', 'in:USD,EUR,GBP,AED,SAR'],
             'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
@@ -39,6 +55,7 @@ class SettingsController extends Controller
             'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
+<<<<<<< Updated upstream
         $workspace = $request->user()->tenant;
         if ($workspace->name !== $data['name'] && $workspace->name_updated_at?->copy()->addDays(7)->isFuture()) {
             return back()->withErrors([
@@ -91,6 +108,21 @@ class SettingsController extends Controller
                     'logo_url' => $workspace->logo_path ? Storage::disk($diskName)->url($workspace->logo_path) : null,
                 ],
             ]);
+=======
+        try {
+            $request->user()->tenant->update($data);
+        } catch (QueryException $exception) {
+            if (Tenant::query()
+                ->where('name_key', mb_strtolower(trim($data['name'])))
+                ->where('id', '<>', $request->user()->tenant_id)
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'name' => 'That workspace name is already in use. Choose another name.',
+                ]);
+            }
+
+            throw $exception;
+>>>>>>> Stashed changes
         }
 
         return back()->with('success', 'Workspace settings updated.');
