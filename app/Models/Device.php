@@ -103,16 +103,13 @@ class Device extends Model
     public function recordLogin(string $ip, ?string $country = null, ?string $city = null): void
     {
         $this->increment('login_count');
-        $this->update([
+
+        $this->forceFill([
             'last_seen_at' => now(),
-        ]);
-        
-        if ($country) {
-            $this->first_location_country ??= $country;
-        }
-        if ($city) {
-            $this->first_location_city ??= $city;
-        }
+            'first_ip' => $this->first_ip ?: $ip,
+            'first_location_country' => $this->first_location_country ?: $country,
+            'first_location_city' => $this->first_location_city ?: $city,
+        ])->save();
     }
 
     public function markTrusted(int $userId, string $method): void

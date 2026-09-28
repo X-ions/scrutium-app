@@ -90,11 +90,29 @@ class SecurityNotificationPreference extends Model
         ];
 
         $field = $map[$eventType] ?? null;
-        if (!$field) {
+
+        if ($field === null) {
             return true;
         }
 
-        return $this->{$field} ?? true;
+        // "High" subsumes the narrower settings; "low" keeps only the
+        // events that require action rather than awareness.
+        if ($this->sensitivity === 'high') {
+            return true;
+        }
+
+        if ($this->sensitivity === 'low') {
+            return in_array($field, [
+                'notify_impossible_travel',
+                'notify_suspicious_activity',
+                'notify_account_locked',
+                'notify_password_change',
+                'notify_email_change',
+                'notify_mfa_change',
+            ], true) && (bool) $this->{$field};
+        }
+
+        return (bool) $this->{$field};
     }
 
     public function getSensitivityLabel(): string

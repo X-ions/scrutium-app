@@ -102,9 +102,27 @@ class AppServiceProvider extends ServiceProvider
                 $lock = @fopen($lockPath, 'c');
                 if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
                     try {
+                        // Every table the app cannot boot without. Gating on
+                        // the first migration alone would leave a deployed
+                        // database pinned to whatever schema it already had,
+                        // silently skipping later additions.
+                        $required = [
+                            'tenants',
+                            'password_reset_tokens',
+                            'security_events',
+                            'devices',
+                            'trusted_devices',
+                            'user_sessions',
+                            'security_notification_preferences',
+                        ];
+
+                        $missing = array_values(array_filter(
+                            $required,
+                            fn (string $table): bool => ! Schema::hasTable($table)
+                        ));
+
                         if (
-                            ! Schema::hasTable('tenants')
-                            || ! Schema::hasTable('password_reset_tokens')
+                            $missing !== []
                             || ! Schema::hasColumn('tenants', 'compact_layout')
                         ) {
                             Artisan::call('migrate', ['--force' => true]);

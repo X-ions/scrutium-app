@@ -2,142 +2,170 @@
 
 namespace App\Services\Security;
 
+use App\Jobs\Security\SecurityNotificationJob;
 use App\Models\Device;
 use App\Models\SecurityEvent;
+use App\Models\SecurityNotificationPreference;
 use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Models\UserSession;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class SecurityEventDetector
 {
-    protected DeviceFingerprint $fingerprintService;
+    protected DeviceFingerprint $fingerprint;
 
-    public function __construct(DeviceFingerprint $fingerprintService)
+    public function __construct(DeviceFingerprint $fingerprint)
     {
-        $this->fingerprintService = $fingerprintService;
+        $this->fingerprint = $fingerprint;
     }
 
     public function detectAndRecord(User $user, Request $request, string $eventType, array $metadata = []): SecurityEvent
     {
-        $fingerprint = $this->fingerprintService->generate($request);
-        $uaData = $this->fingerprintService->parseUserAgent($request->header('User-Agent', ''));
+        $components = $this->fingerprint->extractComponents($request);
+        $hash = $this->fingerprint->hashComponents($components);
+        $ua = $this->fingerprint->parseUserAgent($request->userAgent() ?? '');
         $ip = $request->ip();
-        $location = $this->getLocation($ip);
-        
-        $device = $this->findOrCreateDevice($user, $fingerprint, $uaData, $ip, $location);
-        $trustedDevice = $this->checkTrustedDevice($user, $fingerprint);
-        $session = $this->createOrUpdateSession($user, $device, $request, $uaData, $ip, $location, $eventType);
-        
-        $detectionDetails = $this->analyzeSecurityContext(
-            $user, $device, $trustedDevice, $session, $ip, $location, $eventType
-        );
+        $geo = $this->resolveGeo($ip);
 
-        $event = $this->createSecurityEvent($user, $eventType, $metadata, $detectionDetails, [
+        $device = $this->resolveDevice($user, $hash, $components, $ua, $ip, $geo, $eventType === 'login');
+        $trusted = $this->resolveTrust($user, $hash);
+        $session = $this->resolveSession($user, $device, $request, $ua, $ip, $geo, $eventType);
+
+        $analysis = $this->analyse($user, $device, $trusted, $ua, $geo, $eventType, $components, $hash);
+
+        $event = SecurityEvent::create([
+            'user_id' => $user->id,
+            'tenant_id' => $user->tenant_id,
+            'event_type' => $analysis['event_type'],
+            'event_category' => $this->categoryFor($analysis['event_type']),
+            'severity' => $this->severityFor($analysis['event_type'], $analysis['risk_score']),
+            'risk_score' => $analysis['risk_score'],
+            'is_suspicious' => $analysis['is_suspicious'],
+            'metadata' => $metadata,
+            'detection_details' => $analysis,
             'ip_address' => $ip,
-            'user_agent' => $request->header('User-Agent'),
-            'device_fingerprint' => $fingerprint,
+            'user_agent' => $request->userAgent(),
+            'device_fingerprint' => $hash,
             'device_id' => $device->id,
-            'session_id' => $session->session_id,
-            'location_country' => $location['country'] ?? null,
-            'location_city' => $location['city'] ?? null,
-            'location_lat' => $location['lat'] ?? null,
-            'location_lon' => $location['lon'] ?? null,
+            'session_id' => $session?->session_id,
+            'location_country' => $geo['country'] ?? null,
+            'location_city' => $geo['city'] ?? null,
+            'location_lat' => $geo['lat'] ?? null,
+            'location_lon' => $geo['lon'] ?? null,
+            'occurred_at' => now(),
         ]);
 
-        if ($event->is_suspicious || $this->shouldNotify($event)) {
-            $this->queueNotification($event);
+        if ($this->shouldNotify($user, $event, $device, $trusted)) {
+            if (in_array($event->event_type, [
+                'new_device', 'new_browser', 'new_os', 'new_location',
+                'impossible_travel', 'high_risk_location',
+            ], true)) {
+                $this->armDeviceConfirmation($user, $device, $hash, $ua, $ip, $geo);
+            }
+
+            SecurityNotificationJob::dispatch($event->id);
         }
 
         return $event;
     }
 
-    protected function findOrCreateDevice(User $user, string $fingerprint, array $uaData, string $ip, array $location): Device
-    {
-        return Device::firstOrCreate(
-            ['user_id' => $user->id, 'fingerprint' => $fingerprint],
+    protected function resolveDevice(
+        User $user,
+        string $hash,
+        array $components,
+        array $ua,
+        string $ip,
+        array $geo,
+        bool $countsAsLogin
+    ): Device {
+        $device = Device::firstOrCreate(
+            ['user_id' => $user->id, 'fingerprint' => $hash],
             [
-                'browser' => $uaData['browser'],
-                'browser_version' => $uaData['browser_version'],
-                'os' => $uaData['os'],
-                'os_version' => $uaData['os_version'],
-                'device_type' => $uaData['device_type'],
-                'device_brand' => $uaData['device_brand'],
-                'device_model' => $uaData['device_model'],
-                'fingerprint_components' => $this->fingerprintService->extractComponents(request()),
+                'browser' => $ua['browser'],
+                'browser_version' => $ua['browser_version'],
+                'os' => $ua['os'],
+                'os_version' => $ua['os_version'],
+                'device_type' => $ua['device_type'],
+                'device_brand' => $ua['device_brand'],
+                'device_model' => $ua['device_model'],
+                'fingerprint_components' => $components,
                 'first_ip' => $ip,
-                'first_location_country' => $location['country'] ?? null,
-                'first_location_city' => $location['city'] ?? null,
+                'first_location_country' => $geo['country'] ?? null,
+                'first_location_city' => $geo['city'] ?? null,
                 'first_seen_at' => now(),
                 'last_seen_at' => now(),
-                'login_count' => 1,
+                'login_count' => 0,
             ]
-        )->tap(fn ($d) => $d->recordLogin($ip, $location['country'] ?? null, $location['city'] ?? null));
+        );
+
+        $device->forceFill(['last_seen_at' => now()])->save();
+
+        // A rejected sign-in still tells us the device exists, but it is not
+        // a sign-in, so it must not inflate the activity counters.
+        if ($countsAsLogin) {
+            $device->increment('login_count');
+        }
+
+        return $device;
     }
 
-    protected function checkTrustedDevice(User $user, string $fingerprint): ?TrustedDevice
+    protected function resolveTrust(User $user, string $hash): ?TrustedDevice
     {
-        return TrustedDevice::where('user_id', $user->id)
-            ->where('fingerprint', $fingerprint)
-            ->confirmed()
+        return TrustedDevice::query()
+            ->where('user_id', $user->id)
+            ->where('fingerprint', $hash)
+            ->whereNull('revoked_at')
+            ->whereNotNull('confirmed_at')
             ->first();
     }
 
-    protected function createOrUpdateSession(
+    protected function resolveSession(
         User $user,
         Device $device,
         Request $request,
-        array $uaData,
+        array $ua,
         string $ip,
-        array $location,
+        array $geo,
         string $eventType
-    ): UserSession {
-        if ($eventType === 'login') {
-            $user->sessions()->current()->update(['is_current' => false]);
+    ): ?UserSession {
+        $current = $user->sessions()->current()->first();
 
-            $sessionId = Str::random(64);
-            return UserSession::create([
-                'user_id' => $user->id,
-                'device_id' => $device->id,
-                'session_id' => $sessionId,
-                'ip_address' => $ip,
-                'user_agent' => $request->header('User-Agent'),
-                'browser' => $uaData['browser'],
-                'os' => $uaData['os'],
-                'device_type' => $uaData['device_type'],
-                'location_country' => $location['country'] ?? null,
-                'location_city' => $location['city'] ?? null,
-                'location_lat' => $location['lat'] ?? null,
-                'location_lon' => $location['lon'] ?? null,
-                'is_current' => true,
-                'started_at' => now(),
-                'last_activity_at' => now(),
-                'expires_at' => now()->addDays(30),
-            ]);
+        if ($eventType === 'logout') {
+            // The session is about to be invalidated, so close the record here
+            // or the session list keeps showing a device that is no longer
+            // signed in.
+            $current?->revoke($user->id, 'signed_out');
+
+            return $current;
         }
 
-        $session = $user->sessions()->current()->first();
-        if ($session) {
-            $session->updateActivity();
+        if ($eventType !== 'login') {
+            // Password changes, device revocations and the like are not
+            // sign-ins. They must not mint a new session or steal "current"
+            // from the one the user is actually using.
+            $current?->updateActivity();
+
+            return $current;
         }
 
-        return $session ?? UserSession::create([
+        $user->sessions()->current()->update(['is_current' => false]);
+
+        return UserSession::create([
             'user_id' => $user->id,
             'device_id' => $device->id,
             'session_id' => Str::random(64),
             'ip_address' => $ip,
-            'user_agent' => $request->header('User-Agent'),
-            'browser' => $uaData['browser'],
-            'os' => $uaData['os'],
-            'device_type' => $uaData['device_type'],
-            'location_country' => $location['country'] ?? null,
-            'location_city' => $location['city'] ?? null,
-            'location_lat' => $location['lat'] ?? null,
-            'location_lon' => $location['lon'] ?? null,
+            'user_agent' => $request->userAgent(),
+            'browser' => $ua['browser'],
+            'os' => $ua['os'],
+            'device_type' => $ua['device_type'],
+            'location_country' => $geo['country'] ?? null,
+            'location_city' => $geo['city'] ?? null,
+            'location_lat' => $geo['lat'] ?? null,
+            'location_lon' => $geo['lon'] ?? null,
             'is_current' => true,
             'started_at' => now(),
             'last_activity_at' => now(),
@@ -145,269 +173,335 @@ class SecurityEventDetector
         ]);
     }
 
-    protected function analyzeSecurityContext(
+    protected function analyse(
         User $user,
         Device $device,
-        ?TrustedDevice $trustedDevice,
-        UserSession $session,
-        string $ip,
-        array $location,
-        string $eventType
+        ?TrustedDevice $trusted,
+        array $ua,
+        array $geo,
+        string $eventType,
+        array $components,
+        string $hash
     ): array {
         $details = [
-            'is_new_device' => false,
-            'is_new_browser' => false,
-            'is_new_os' => false,
-            'is_new_location' => false,
-            'impossible_travel' => false,
-            'suspicious_activity' => false,
+            'event_type' => $eventType,
+            'browser' => $ua['browser'].' '.$ua['browser_version'],
+            'os' => $ua['os'].' '.$ua['os_version'],
+            'device_type' => $ua['device_type'],
+            'signals' => [],
             'risk_score' => 'low',
-            'triggers' => [],
+            'is_suspicious' => false,
+            'is_first_contact' => $device->wasRecentlyCreated,
         ];
 
-        if ($device->wasRecentlyCreated) {
-            $details['is_new_device'] = true;
-            $details['triggers'][] = 'new_device';
+        if ($eventType !== 'login') {
+            return $details;
         }
 
-        $previousDevices = $user->devices()->where('id', '!=', $device->id)->get();
-        
-        if ($previousDevices->where('browser', $device->browser)->isEmpty()) {
-            $details['is_new_browser'] = true;
-            $details['triggers'][] = 'new_browser';
+        $known = $user->devices()
+            ->whereKeyNot($device->getKey())
+            ->where('is_trusted', true)
+            ->get();
+
+        if ($device->wasRecentlyCreated && $known->isEmpty()) {
+            $details['signals'][] = 'first_ever_device';
+        } elseif ($device->wasRecentlyCreated) {
+            $details['signals'][] = 'new_device';
         }
 
-        if ($previousDevices->where('os', $device->os)->isEmpty()) {
-            $details['is_new_os'] = true;
-            $details['triggers'][] = 'new_os';
+        if ($known->isNotEmpty() && $known->where('browser', $ua['browser'])->isEmpty()) {
+            $details['signals'][] = 'new_browser';
         }
 
-        $previousLocations = $user->securityEvents()
-            ->whereNotNull('location_country')
-            ->pluck('location_country', 'location_city')
-            ->unique()
-            ->toArray();
-
-        if ($location['country'] && !in_array($location['country'], array_keys($previousLocations))) {
-            $details['is_new_location'] = true;
-            $details['triggers'][] = 'new_location';
+        if ($known->isNotEmpty() && $known->where('os', $ua['os'])->isEmpty()) {
+            $details['signals'][] = 'new_os';
         }
 
-        $impossibleTravel = $this->checkImpossibleTravel($user, $location);
-        if ($impossibleTravel) {
-            $details['impossible_travel'] = true;
-            $details['triggers'][] = 'impossible_travel';
-            $details['impossible_travel_details'] = $impossibleTravel;
+        if ($this->isNewLocation($user, $geo)) {
+            $details['signals'][] = 'new_location';
         }
 
-        $riskScore = $this->calculateRiskScore($details, $trustedDevice, $location);
-        $details['risk_score'] = $riskScore;
+        $travel = $this->impossibleTravel($user, $geo);
+        if ($travel !== null) {
+            $details['signals'][] = 'impossible_travel';
+            $details['impossible_travel'] = $travel;
+        }
 
-        if ($riskScore !== 'low' || !empty($details['triggers'])) {
-            $details['suspicious_activity'] = true;
+        if ($this->isHighRiskLocation($geo)) {
+            $details['signals'][] = 'high_risk_location';
+        }
+
+        if ($trusted === null && $device->wasRecentlyCreated) {
+            $details['signals'][] = 'untrusted_device';
+        }
+
+        $details['risk_score'] = $this->scoreRisk($details['signals']);
+        $details['is_suspicious'] = in_array('impossible_travel', $details['signals'], true)
+            || in_array('high_risk_location', $details['signals'], true);
+
+        if ($details['is_first_contact'] || in_array('new_device', $details['signals'], true)) {
+            $details['event_type'] = 'new_device';
+        } elseif (in_array('impossible_travel', $details['signals'], true)) {
+            $details['event_type'] = 'impossible_travel';
+        } elseif (in_array('high_risk_location', $details['signals'], true)) {
+            $details['event_type'] = 'high_risk_location';
+        } elseif (in_array('new_location', $details['signals'], true)) {
+            $details['event_type'] = 'new_location';
         }
 
         return $details;
     }
 
-    protected function checkImpossibleTravel(User $user, array $currentLocation): ?array
+    protected function isNewLocation(User $user, array $geo): bool
     {
-        if (empty($currentLocation['lat']) || empty($currentLocation['lon'])) {
+        if (empty($geo['country'])) {
+            return false;
+        }
+
+        return ! $user->securityEvents()
+            ->where('event_type', 'login')
+            ->where('location_country', $geo['country'])
+            ->where('occurred_at', '>=', now()->subDays(180))
+            ->exists();
+    }
+
+    protected function impossibleTravel(User $user, array $geo): ?array
+    {
+        if (empty($geo['lat']) || empty($geo['lon'])) {
             return null;
         }
 
-        $lastEvent = $user->securityEvents()
+        $previous = $user->securityEvents()
             ->whereNotNull('location_lat')
-            ->whereNotNull('location_lon')
             ->where('occurred_at', '>=', now()->subHours(24))
             ->latest('occurred_at')
             ->first();
 
-        if (!$lastEvent) {
+        if ($previous === null) {
             return null;
         }
 
-        $distance = $this->calculateDistance(
-            $lastEvent->location_lat,
-            $lastEvent->location_lon,
-            $currentLocation['lat'],
-            $currentLocation['lon']
+        $km = $this->haversine(
+            (float) $previous->location_lat,
+            (float) $previous->location_lon,
+            (float) $geo['lat'],
+            (float) $geo['lon']
         );
 
-        $hoursDiff = $lastEvent->occurred_at->diffInHours(now());
-        $maxSpeed = 1000; // km/h (commercial flight speed)
+        $hours = max($previous->occurred_at->diffInMinutes(now()) / 60, 0.25);
+        $impliedSpeed = $km / $hours;
+        $threshold = (float) config('security.impossible_travel_speed_kmh', 900);
 
-        if ($hoursDiff > 0 && ($distance / $hoursDiff) > $maxSpeed) {
-            return [
-                'distance_km' => round($distance, 1),
-                'time_hours' => $hoursDiff,
-                'required_speed_kmh' => round($distance / $hoursDiff, 1),
-                'previous_location' => [
-                    'lat' => $lastEvent->location_lat,
-                    'lon' => $lastEvent->location_lon,
-                    'country' => $lastEvent->location_country,
-                    'city' => $lastEvent->location_city,
-                    'timestamp' => $lastEvent->occurred_at,
-                ],
-                'current_location' => $currentLocation,
-            ];
+        if ($impliedSpeed < $threshold) {
+            return null;
         }
 
-        return null;
+        return [
+            'distance_km' => round($km, 1),
+            'elapsed_hours' => round($hours, 2),
+            'implied_speed_kmh' => round($impliedSpeed),
+            'from' => trim(($previous->location_city ?? '').', '.($previous->location_country ?? ''), ', '),
+            'to' => trim(($geo['city'] ?? '').', '.($geo['country'] ?? ''), ', '),
+        ];
     }
 
-    protected function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    protected function haversine(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
-        $earthRadius = 6371; // km
-        
-        $latDiff = deg2rad($lat2 - $lat1);
-        $lonDiff = deg2rad($lon2 - $lon1);
-        
-        $a = sin($latDiff / 2) ** 2 
-            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lonDiff / 2) ** 2;
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        
-        return $earthRadius * $c;
+        $earthRadiusKm = 6371.0;
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+
+        return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
-    protected function calculateRiskScore(array $details, ?TrustedDevice $trustedDevice, array $location): string
+    protected function isHighRiskLocation(array $geo): bool
     {
+        $blocked = array_filter(array_map('trim', explode(',', (string) config('security.high_risk_countries', ''))));
+
+        return ! empty($geo['country']) && in_array($geo['country'], $blocked, true);
+    }
+
+    protected function scoreRisk(array $signals): string
+    {
+        $weights = [
+            'first_ever_device' => 30,
+            'new_device' => 25,
+            'new_browser' => 10,
+            'new_os' => 10,
+            'new_location' => 20,
+            'untrusted_device' => 15,
+            'impossible_travel' => 60,
+            'high_risk_location' => 50,
+        ];
+
         $score = 0;
-
-        if ($details['is_new_device']) $score += 30;
-        if ($details['is_new_browser']) $score += 10;
-        if ($details['is_new_os']) $score += 10;
-        if ($details['is_new_location']) $score += 20;
-        if ($details['impossible_travel']) $score += 50;
-        if (!$trustedDevice) $score += 25;
-
-        // High risk locations
-        $highRiskCountries = ['KP', 'IR', 'SY', 'CU', 'SD']; // Example
-        if (in_array($location['country'] ?? '', $highRiskCountries)) {
-            $score += 30;
+        foreach ($signals as $signal) {
+            $score += $weights[$signal] ?? 0;
         }
 
-        if ($score >= 70) return 'critical';
-        if ($score >= 50) return 'high';
-        if ($score >= 25) return 'medium';
-        return 'low';
-    }
-
-    protected function shouldNotify(SecurityEvent $event): bool
-    {
-        $preference = $event->user->securityNotificationPreference 
-            ?? SecurityNotificationPreference::getDefaults();
-
-        if (!$preference['email_enabled']) {
-            return false;
-        }
-
-        $eventType = $event->event_type;
-        
-        if (!$preference->shouldNotify($eventType)) {
-            return false;
-        }
-
-        // Rate limiting
-        $recentCount = SecurityEvent::where('user_id', $event->user_id)
-            ->where('notification_sent', true)
-            ->where('occurred_at', '>=', now()->subHour())
-            ->count();
-        
-        if ($recentCount >= ($preference['max_emails_per_hour'] ?? 3)) {
-            return false;
-        }
-
-        $dailyCount = SecurityEvent::where('user_id', $event->user_id)
-            ->where('notification_sent', true)
-            ->where('occurred_at', '>=', now()->subDay())
-            ->count();
-        
-        if ($dailyCount >= ($preference['max_emails_per_day'] ?? 10)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    protected function queueNotification(SecurityEvent $event): void
-    {
-        // Dispatch to queue job
-        SecurityNotificationJob::dispatch($event);
-    }
-
-    protected function createSecurityEvent(
-        User $user,
-        string $eventType,
-        array $metadata,
-        array $detectionDetails,
-        array $context
-    ): SecurityEvent {
-        $eventCategory = $this->getEventCategory($eventType);
-        $severity = $this->getSeverity($eventType, $detectionDetails['risk_score']);
-        $isSuspicious = $detectionDetails['suspicious_activity'] ?? false;
-
-        return SecurityEvent::create([
-            'user_id' => $user->id,
-            'tenant_id' => $user->tenant_id,
-            'event_type' => $eventType,
-            'event_category' => $eventCategory,
-            'severity' => $severity,
-            'metadata' => $metadata,
-            'detection_details' => $detectionDetails,
-            'is_suspicious' => $isSuspicious,
-            'risk_score' => $detectionDetails['risk_score'] ?? 'low',
-            'occurred_at' => now(),
-            ...$context,
-        ]);
-    }
-
-    protected function getEventCategory(string $eventType): string
-    {
         return match (true) {
-            in_array($eventType, ['login', 'logout', 'login_failed', 'new_device', 'new_browser', 'new_os', 'new_location', 'impossible_travel', 'high_risk_location']) => 'authentication',
-            in_array($eventType, ['password_changed', 'email_changed', 'mfa_enabled', 'mfa_disabled', 'recovery_changed', 'security_settings_changed']) => 'account_security',
-            in_array($eventType, ['api_key_created', 'api_key_revoked', 'ownership_transferred']) => 'access_control',
-            in_array($eventType, ['suspicious_activity', 'account_locked']) => 'suspicious_activity',
-            in_array($eventType, ['session_revoked', 'device_management']) => 'device_management',
-            default => 'authentication',
+            $score >= 70 => 'critical',
+            $score >= 45 => 'high',
+            $score >= 20 => 'medium',
+            default => 'low',
         };
     }
 
-    protected function getSeverity(string $eventType, string $riskScore): string
+    /**
+     * Decide whether this event is worth an email.
+     *
+     * The rule differs by family, which is what keeps mail volume honest:
+     *
+     *  - Sign-ins: only the very first sign-in from a device the user has
+     *    never confirmed. Trusted devices and repeat sign-ins stay silent.
+     *  - Failed sign-ins: only once the attempt count crosses the
+     *    threshold, so a single typo never produces an email.
+     *  - Account changes: these are rare and consequential, so they always
+     *    notify.
+     *
+     * All three then pass through the per-user hourly and daily ceilings.
+     */
+    protected function shouldNotify(User $user, SecurityEvent $event, Device $device, ?TrustedDevice $trusted): bool
     {
-        $criticalEvents = ['account_locked', 'ownership_transferred', 'impossible_travel'];
-        $highEvents = ['password_changed', 'email_changed', 'mfa_disabled', 'recovery_changed', 'api_key_created'];
-        $mediumEvents = ['new_device', 'new_location', 'mfa_enabled', 'api_key_revoked', 'high_risk_location', 'suspicious_activity'];
+        $preference = $user->securityNotificationPreference
+            ?? SecurityNotificationPreference::firstOrCreate(
+                ['user_id' => $user->id],
+                SecurityNotificationPreference::getDefaults()
+            );
 
-        if (in_array($eventType, $criticalEvents) || $riskScore === 'critical') {
-            return 'critical';
+        if (! $preference->email_enabled) {
+            return false;
         }
-        if (in_array($eventType, $highEvents) || $riskScore === 'high') {
-            return 'high';
+
+        if (! $preference->shouldNotify($event->event_type)) {
+            return false;
         }
-        if (in_array($eventType, $mediumEvents) || $riskScore === 'medium') {
-            return 'medium';
+
+        $eligible = match ($event->event_type) {
+            'login_failed' => (bool) ($event->metadata['exceeds_threshold'] ?? false),
+            'login' => false,
+            'new_device', 'new_browser', 'new_os', 'new_location',
+            'impossible_travel', 'high_risk_location' => $trusted === null && $device->wasRecentlyCreated,
+            default => true,
+        };
+
+        if (! $eligible) {
+            return false;
         }
-        if ($riskScore === 'low') {
-            return 'low';
+
+        if (! $this->withinRateLimit($user, $preference, $event)) {
+            return false;
         }
-        return 'info';
+
+        // One alert per unconfirmed device, not one per sign-in attempt.
+        return ! SecurityEvent::query()
+            ->where('user_id', $user->id)
+            ->where('device_fingerprint', $event->device_fingerprint)
+            ->where('notification_sent', true)
+            ->where('occurred_at', '>=', now()->subHours((int) config('security.new_device_alert_window_hours', 24)))
+            ->exists();
     }
 
-    protected function getLocation(string $ip): array
+    protected function withinRateLimit(User $user, SecurityNotificationPreference $preference, SecurityEvent $event): bool
     {
-        // Use IP geolocation service (cached)
-        $cacheKey = "geoip_{$ip}";
-        
-        return Cache::remember($cacheKey, 86400 * 7, function () use ($ip) {
-            // In production, use a real GeoIP service like MaxMind, IPInfo, etc.
-            // For now, return mock data
+        $hourCount = SecurityEvent::query()
+            ->where('user_id', $user->id)
+            ->where('notification_sent', true)
+            ->where('occurred_at', '>=', now()->subHour())
+            ->count();
+
+        if ($hourCount >= $preference->max_emails_per_hour) {
+            return false;
+        }
+
+        $dayCount = SecurityEvent::query()
+            ->where('user_id', $user->id)
+            ->where('notification_sent', true)
+            ->where('occurred_at', '>=', now()->subDay())
+            ->count();
+
+        return $dayCount < $preference->max_emails_per_day;
+    }
+
+    protected function armDeviceConfirmation(User $user, Device $device, string $hash, array $ua, string $ip, array $geo): void
+    {
+        $token = bin2hex(random_bytes(32));
+
+        TrustedDevice::updateOrCreate(
+            ['user_id' => $user->id, 'fingerprint' => $hash],
+            [
+                'device_id' => $device->id,
+                'browser' => $ua['browser'],
+                'os' => $ua['os'],
+                'device_type' => $ua['device_type'],
+                'trusted_ip' => $ip,
+                'trusted_location_country' => $geo['country'] ?? null,
+                'trusted_location_city' => $geo['city'] ?? null,
+                'trust_method' => 'self_service',
+                'confirmation_token' => $token,
+                'token_expires_at' => now()->addDays((int) config('security.device_token_days', 7)),
+                'confirmed_at' => null,
+                'revoked_at' => null,
+            ]
+        );
+    }
+
+    protected function categoryFor(string $eventType): string
+    {
+        return match ($eventType) {
+            'login', 'logout', 'login_failed', 'new_device', 'new_location', 'new_browser', 'new_os', 'impossible_travel', 'high_risk_location' => 'authentication',
+            'password_changed', 'email_changed', 'mfa_enabled', 'mfa_disabled', 'recovery_changed', 'security_settings_changed' => 'account_security',
+            'api_key_created', 'api_key_revoked', 'ownership_transferred' => 'access_control',
+            'account_locked', 'suspicious_activity' => 'suspicious_activity',
+            default => 'device_management',
+        };
+    }
+
+    protected function severityFor(string $eventType, string $riskScore): string
+    {
+        if (in_array($eventType, ['account_locked', 'impossible_travel', 'ownership_transferred'], true) || $riskScore === 'critical') {
+            return 'critical';
+        }
+
+        if (in_array($eventType, ['password_changed', 'email_changed', 'mfa_disabled', 'recovery_changed', 'api_key_created'], true) || $riskScore === 'high') {
+            return 'high';
+        }
+
+        if (in_array($eventType, ['new_device', 'new_location', 'mfa_enabled', 'api_key_revoked', 'high_risk_location', 'suspicious_activity'], true) || $riskScore === 'medium') {
+            return 'medium';
+        }
+
+        return $eventType === 'login' ? 'info' : 'low';
+    }
+
+    protected function resolveGeo(string $ip): array
+    {
+        if (in_array($ip, [null, '', '127.0.0.1', '::1'], true)) {
+            return [];
+        }
+
+        return Cache::remember("security.geo.{$ip}", now()->addDays(30), function () use ($ip) {
+            $response = @file_get_contents('https://ipwho.is/'.$ip);
+
+            if ($response === false) {
+                return [];
+            }
+
+            $payload = json_decode($response, true);
+
+            if (! is_array($payload) || ($payload['success'] ?? false) !== true) {
+                return [];
+            }
+
             return [
-                'country' => 'US',
-                'city' => 'San Francisco',
-                'lat' => 37.7749,
-                'lon' => -122.4194,
+                'country' => $payload['country_code'] ?? null,
+                'city' => $payload['city'] ?? null,
+                'lat' => $payload['latitude'] ?? null,
+                'lon' => $payload['longitude'] ?? null,
             ];
         });
     }

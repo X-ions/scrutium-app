@@ -149,6 +149,21 @@
                 </a>
             </li>
 
+            <li>
+                <a
+                    href="/security"
+                    class="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                >
+                    <span class="text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2.75L4.5 5.5v6.1c0 4.6 3.13 8.9 7.5 9.65 4.37-.75 7.5-5.05 7.5-9.65V5.5L12 2.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M9.25 11.75L11.25 13.75L14.75 10.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </span>
+                    Security
+                </a>
+            </li>
+
             <!-- Language / RTL Submenu Item -->
             <li class="relative" @click.outside="subDropdownOpen = false">
                 <button

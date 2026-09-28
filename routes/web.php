@@ -15,6 +15,7 @@ use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScoringController;
+use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,7 +41,11 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware('signed')->name('verification.verify');
 });
 
-Route::middleware(['auth', 'tenant', 'verified'])->group(function (): void {
+// Unverified accounts may sign in and browse. The non-dismissible
+// verification modal in layouts/app.blade.php is the gate: it blocks
+// interaction until the address is confirmed, and it reappears on
+// every request so it cannot be dismissed or routed around.
+Route::middleware(['auth', 'tenant'])->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/locale/{locale}', [LocaleController::class, 'switch'])
         ->whereIn('locale', array_keys(LocaleController::SUPPORTED_LOCALES))
@@ -49,6 +54,23 @@ Route::middleware(['auth', 'tenant', 'verified'])->group(function (): void {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    Route::prefix('/security')->name('security.')->group(function (): void {
+        Route::get('/', [SecurityController::class, 'index'])->name('index');
+        Route::get('/devices', [SecurityController::class, 'devices'])->name('devices');
+        Route::get('/sessions', [SecurityController::class, 'sessions'])->name('sessions');
+        Route::get('/devices/confirm/{token}', [SecurityController::class, 'reviewDeviceConfirmation'])
+            ->middleware('signed')
+            ->name('devices.review');
+        Route::post('/devices/confirm/{token}', [SecurityController::class, 'confirmDevice'])->name('devices.confirm');
+        Route::post('/devices/{device}/trust', [SecurityController::class, 'trustDevice'])->name('devices.trust');
+        Route::post('/devices/{device}/revoke', [SecurityController::class, 'revokeDevice'])->name('devices.revoke');
+        Route::post('/devices/{device}/block', [SecurityController::class, 'blockDevice'])->name('devices.block');
+        Route::post('/sessions/{session}/revoke', [SecurityController::class, 'revokeSession'])->name('sessions.revoke');
+        Route::post('/sessions/revoke-others', [SecurityController::class, 'revokeOtherSessions'])->name('sessions.revoke-others');
+        Route::put('/notifications', [SecurityController::class, 'updatePreferences'])->name('notifications.update');
+        Route::post('/events/{event}/acknowledge', [SecurityController::class, 'acknowledge'])->name('events.acknowledge');
+    });
 
     Route::middleware('operate')->group(function (): void {
         Route::get('/discover/campaign-tools', [CampaignController::class, 'tools'])->name('campaign-tools');

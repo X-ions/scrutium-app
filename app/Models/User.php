@@ -3,11 +3,6 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
-use App\Models\SecurityEvent;
-use App\Models\Device;
-use App\Models\TrustedDevice;
-use App\Models\UserSession;
-use App\Models\SecurityNotificationPreference;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

@@ -54,20 +54,47 @@ class DeviceFingerprint
         ];
     }
 
+    /**
+     * Hash the fingerprint components.
+     *
+     * Only the components listed in config('security.fingerprint.stable_components')
+     * feed the hash. Volatile signals such as the full user-agent or the
+     * Accept header are deliberately excluded: they change on every browser
+     * or OS patch, which would make an established device look brand new and
+     * re-trigger a "new device" email on every update.
+     */
     public function hashComponents(array $components): string
     {
-        $stableComponents = [];
-        
-        foreach ($components as $key => $value) {
+        $stable = (array) config('security.fingerprint.stable_components', [
+            'accept_language',
+            'sec_ch_ua_mobile',
+            'sec_ch_ua_platform',
+            'screen_width',
+            'screen_height',
+            'color_depth',
+            'timezone_offset',
+        ]);
+
+        $material = [];
+
+        foreach ($stable as $key) {
+            $value = $components[$key] ?? null;
+
             if ($value !== null && $value !== '') {
-                $stableComponents[$key] = $value;
+                $material[$key] = is_array($value) ? $value : (string) $value;
             }
         }
-        
-        ksort($stableComponents);
-        $json = json_encode($stableComponents, JSON_SORT_KEYS);
-        
-        return hash('sha256', $json);
+
+        // Nothing recognisable to hash: fall back to the user-agent so the
+        // device is still distinguishable rather than collapsing every
+        // visitor onto one shared fingerprint.
+        if ($material === []) {
+            $material['user_agent'] = (string) ($components['user_agent'] ?? 'unknown');
+        }
+
+        ksort($material);
+
+        return hash('sha256', (string) json_encode($material, JSON_UNESCAPED_UNICODE));
     }
 
     public function parseUserAgent(string $userAgent): array

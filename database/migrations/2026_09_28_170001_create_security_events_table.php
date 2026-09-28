@@ -18,8 +18,10 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent')->nullable();
-            $table->string('device_fingerprint')->nullable();
-            $table->string('device_id')->nullable();
+            $table->string('device_fingerprint', 64)->nullable();
+            // Plain column, not a foreign key: the devices table is created by a
+            // later migration, and an audit row must survive device deletion.
+            $table->unsignedBigInteger('device_id')->nullable();
             $table->string('session_id')->nullable();
             $table->string('location_country')->nullable();
             $table->string('location_city')->nullable();
