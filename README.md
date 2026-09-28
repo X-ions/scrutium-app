@@ -21,7 +21,18 @@ Campaign management, deliverable verification, performance analytics, scoring en
 | **Reports** | Versioned reports, freeze cutoffs, bulk export, system version registry |
 | **Alerts** | Issue tracking, subscriptions, compliance notifications |
 | **Integrations** | Platform health, API management, auto-verification |
-| **Settings** | Roles & permissions, tenant overview |
+| **Settings** | Workspace profile, preferences, roles & permissions, tenant overview |
+
+### Workspace settings
+
+Workspace owners and admins can open the workspace settings modal from the gear icon beside the workspace selector in the sidebar. It supports:
+
+- Workspace name changes, limited to once every seven days, plus a workspace description and logo.
+- Default currency and workspace language (English or Arabic/RTL).
+- Email subscriptions for security alerts, compact dashboard spacing, and modal-only auto-save.
+- A Pricing control that displays the workspace's current plan.
+
+Workspace preferences are shared with workspace members. Security-alert subscriptions are saved per user. Workspace logos use the configured evidence storage disk; configure an S3-compatible disk for durable uploads on Vercel.
 
 ---
 
@@ -127,6 +138,8 @@ This repo includes `vercel.json` and `api/index.php` for **vercel-php**.
 | `AWS_USE_PATH_STYLE_ENDPOINT` | `true` |
 
 4. Redeploy after saving env vars.
+
+The workspace-preferences migration adds the settings fields to existing tenant databases. Vercel's startup migration check runs pending migrations when `SCRUTIUM_AUTO_MIGRATE=true` and `DB_CONNECTION=pgsql`; the database user must be permitted to alter the schema. If automatic migrations are disabled, run `php artisan migrate --force` as part of deployment.
 
 ### Production storage with Neon + S3-compatible object storage
 

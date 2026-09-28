@@ -427,3 +427,18 @@
 @utility nav-icon-item-inactive {
   @apply hover:text-brand-500 dark:hover:text-brand-500 border border-transparent text-gray-500 hover:border-gray-200 hover:bg-white dark:text-gray-400 dark:hover:border-gray-800 dark:hover:bg-gray-900;
 }
+
+@layer utilities {
+  .compact-layout .p-5,
+  .compact-layout .p-6 {
+    padding: 1rem;
+  }
+
+  .compact-layout .gap-6 {
+    gap: 1rem;
+  }
+
+  .compact-layout .space-y-6 > :not(:first-child) {
+    margin-block-start: 1rem;
+  }
+}

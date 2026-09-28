@@ -21,7 +21,23 @@ class Tenant extends Model
         'plan',
         'timezone',
         'currency',
+        'description',
+        'logo_path',
+        'name_updated_at',
+        'language',
+        'compact_layout',
+        'auto_save',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'name_updated_at' => 'datetime',
+            'compact_layout' => 'boolean',
+            'auto_save' => 'boolean',
+        ];
+    }
 
     public function users(): HasMany
     {

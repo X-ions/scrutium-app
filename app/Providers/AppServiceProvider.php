@@ -9,14 +9,13 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Connection;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AppServiceProvider extends ServiceProvider
@@ -103,7 +102,11 @@ class AppServiceProvider extends ServiceProvider
                 $lock = @fopen($lockPath, 'c');
                 if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
                     try {
-                        if (! Schema::hasTable('tenants') || ! Schema::hasTable('password_reset_tokens')) {
+                        if (
+                            ! Schema::hasTable('tenants')
+                            || ! Schema::hasTable('password_reset_tokens')
+                            || ! Schema::hasColumn('tenants', 'compact_layout')
+                        ) {
                             Artisan::call('migrate', ['--force' => true]);
                         }
                     } finally {

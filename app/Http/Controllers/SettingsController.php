@@ -6,8 +6,10 @@ use App\Enums\UserRole;
 use App\Models\AlertSubscription;
 use App\Models\User;
 use App\Notifications\WelcomeAccount;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -24,15 +26,72 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function updateWorkspace(Request $request): RedirectResponse
+    public function updateWorkspace(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'timezone' => ['required', 'timezone'],
             'currency' => ['required', 'string', 'size:3', 'in:USD,EUR,GBP,AED,SAR'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:1000'],
+            'language' => ['sometimes', Rule::in(array_keys(LocaleController::SUPPORTED_LOCALES))],
+            'compact_layout' => ['sometimes', 'boolean'],
+            'auto_save' => ['sometimes', 'boolean'],
+            'logo' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        $request->user()->tenant->update($data);
+        $workspace = $request->user()->tenant;
+        if ($workspace->name !== $data['name'] && $workspace->name_updated_at?->copy()->addDays(7)->isFuture()) {
+            return back()->withErrors([
+                'name' => 'Workspace name can next be changed on '.$workspace->name_updated_at->copy()->addDays(7)->toFormattedDateString().'.',
+            ])->withInput();
+        }
+
+        $changes = collect($data)->only([
+            'name',
+            'timezone',
+            'currency',
+            'description',
+            'language',
+            'compact_layout',
+            'auto_save',
+        ])->all();
+
+        if ($workspace->name !== $data['name']) {
+            $changes['name_updated_at'] = now();
+        }
+
+        $diskName = config('filesystems.evidence_disk');
+        if ($request->hasFile('logo')) {
+            $oldLogoPath = $workspace->logo_path;
+            $changes['logo_path'] = $request->file('logo')->storePublicly("workspaces/{$workspace->id}", $diskName);
+        }
+
+        $workspace->update($changes);
+
+        if (isset($oldLogoPath)) {
+            Storage::disk($diskName)->delete($oldLogoPath);
+        }
+
+        if (isset($data['language'])) {
+            $locale = $data['language'];
+            $direction = LocaleController::SUPPORTED_LOCALES[$locale]['dir'];
+            session(['locale' => $locale, 'dir' => $direction]);
+            cookie()->queue('locale', $locale, 60 * 24 * 365);
+            cookie()->queue('dir', $direction, 60 * 24 * 365);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Workspace settings saved.',
+                'workspace' => [
+                    'language' => $workspace->language,
+                    'direction' => LocaleController::SUPPORTED_LOCALES[$workspace->language]['dir'],
+                    'compact_layout' => $workspace->compact_layout,
+                    'auto_save' => $workspace->auto_save,
+                    'logo_url' => $workspace->logo_path ? Storage::disk($diskName)->url($workspace->logo_path) : null,
+                ],
+            ]);
+        }
 
         return back()->with('success', 'Workspace settings updated.');
     }
@@ -71,18 +130,26 @@ class SettingsController extends Controller
         return back()->with('success', 'Team member role updated.');
     }
 
-    public function storeSubscription(Request $request): RedirectResponse
+    public function storeSubscription(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'type' => ['nullable', 'string', 'max:80'],
             'channel' => ['required', Rule::in(['in_app', 'email'])],
+            'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        AlertSubscription::updateOrCreate([
+        $subscription = AlertSubscription::updateOrCreate([
             'user_id' => $request->user()->id,
             'type' => $data['type'] ?? null,
             'channel' => $data['channel'],
-        ], ['tenant_id' => $request->user()->tenant_id, 'is_active' => true]);
+        ], [
+            'tenant_id' => $request->user()->tenant_id,
+            'is_active' => $data['is_active'] ?? true,
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['is_active' => $subscription->is_active]);
+        }
 
         return back()->with('success', 'Notification subscription added.');
     }

@@ -144,7 +144,7 @@
 
 </head>
 
-<body>
+<body @class(['compact-layout' => auth()->user()?->tenant?->compact_layout])>
     @if (auth()->check() && !auth()->user()->hasVerifiedEmail())
         <x-auth.verify-email-modal :user="auth()->user()" />
     @endif
@@ -158,13 +158,17 @@
             <!-- app header start -->
             @include('layouts.app-header')
             <!-- app header end -->
-            <div class="mx-auto max-w-(--breakpoint-2xl) p-4 md:p-6">
+            <div class="mx-auto max-w-(--breakpoint-2xl) {{ auth()->user()?->tenant?->compact_layout ? 'p-3 md:p-4' : 'p-4 md:p-6' }}">
                 @include('components.common.flash-messages')
                 @yield('content')
             </div>
         </div>
 
     </div>
+
+    @if (auth()->user()?->canManageWorkspace())
+        <x-workspace.settings-modal :workspace="auth()->user()->tenant" />
+    @endif
 
 </body>
 
