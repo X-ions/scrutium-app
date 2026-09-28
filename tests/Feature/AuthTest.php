@@ -201,6 +201,19 @@ it('shows the workspace owner summary in the sidebar', function () {
         ->assertSee('Workspace owner');
 });
 
+it('shows the workspace team dropdown and member list in the sidebar', function () {
+    $owner = User::factory()->owner()->create(['name' => 'Alicia Stone']);
+
+    $this->actingAs($owner)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Open workspace team menu')
+        ->assertSee('Create Team')
+        ->assertSee('Invite')
+        ->assertSee('Alicia Stone')
+        ->assertSee('You');
+});
+
 it('keeps guests out and signs a user in', function () {
     $this->get('/campaigns')->assertRedirect(route('login'));
 

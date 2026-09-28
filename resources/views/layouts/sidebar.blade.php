@@ -1,6 +1,7 @@
 @php
     use App\Helpers\MenuHelper;
     $workspace = $workspace ?? auth()->user()?->tenant;
+    $teamMembers = $workspace?->users()->orderBy('name')->get() ?? collect();
     $menuGroups = MenuHelper::getMenuGroups();
     $currentPath = request()->path();
 @endphp
@@ -56,9 +57,54 @@
     </div>
 
     @if ($workspace)
-        <div class="mb-6 hidden rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-white/5 [.sidebar-expanded_&]:block">
-            <p class="text-[10px] uppercase tracking-wider text-gray-400">Workspace</p>
-            <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
+        <div class="relative mb-6 hidden rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-white/5 [.sidebar-expanded_&]:block"
+            x-data="{ workspaceMenuOpen: false }"
+            @click.outside="workspaceMenuOpen = false"
+            @keydown.escape.window="workspaceMenuOpen = false">
+            <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-wider text-gray-400">Workspace</p>
+                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
+                </div>
+                <button type="button"
+                    class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    aria-label="Open workspace team menu"
+                    aria-haspopup="true"
+                    :aria-expanded="workspaceMenuOpen.toString()"
+                    @click="workspaceMenuOpen = !workspaceMenuOpen">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M10 4.167v11.666M4.167 10h11.666" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <div x-cloak x-show="workspaceMenuOpen" x-transition.origin.top.right
+                class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                role="menu">
+                @if (auth()->user()?->canManageWorkspace())
+                    <div class="space-y-1 border-b border-gray-100 p-2 dark:border-gray-800">
+                        <a href="{{ route('settings') }}" role="menuitem"
+                            class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Create Team</a>
+                        <a href="{{ route('settings') }}" role="menuitem"
+                            class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Invite</a>
+                    </div>
+                @endif
+                <div class="max-h-56 overflow-y-auto p-2">
+                    <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Team members</p>
+                    @forelse ($teamMembers as $member)
+                        <div class="flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
+                            <span class="truncate text-gray-700 dark:text-gray-200">{{ $member->name }}</span>
+                            @if ($member->is(auth()->user()))
+                                <span class="shrink-0 text-xs text-gray-400">You</span>
+                            @else
+                                <span class="shrink-0 text-xs text-gray-400">{{ $member->role()->label() }}</span>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No team members yet.</p>
+                    @endforelse
+                </div>
+            </div>
         </div>
     @endif
 
