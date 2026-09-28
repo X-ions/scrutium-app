@@ -181,7 +181,7 @@
                     <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
                     <span>Campaign tools</span>
                 </a>
-                <p class="font-medium text-gray-800 dark:text-white/90">Partner integrations</p>
+                <a href="{{ route('partnerintegrations') }}" class="block font-medium text-gray-800 transition-colors hover:text-brand-600 dark:text-white/90 dark:hover:text-brand-300">{{ __('Partner integrations') }}</a>
                 <p class="font-medium text-gray-800 dark:text-white/90">Featured services</p>
                 <button type="button" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">
                     Explore

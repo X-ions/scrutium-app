@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\IntegrationStatus;
+use App\Enums\CampaignStatus;
+use App\Models\Campaign;
 use App\Models\Integration;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,36 +14,72 @@ class IntegrationController extends Controller
 {
     public function index(): View
     {
-        return view('pages.scrutium.integrations.index', [
-            'title' => 'Integrations',
-            'integrations' => Integration::orderBy('provider')->get(),
+        $connections = Integration::orderBy('provider')->get()->keyBy('provider');
+        $providers = collect(config('integrations.providers'))->map(function (array $provider, string $key) use ($connections): array {
+            $integration = $connections->get($key);
+
+            return $provider + [
+                'provider' => $key,
+                'integration' => $integration,
+                'status' => ! $integration
+                    ? 'Available'
+                    : ($integration->isHealthy() ? 'Connected' : 'Authentication Needed'),
+            ];
+        });
+
+        return view('pages.scrutium.integrations.partner-index', [
+            'title' => 'Partner integrations',
+            'categories' => config('integrations.categories'),
+            'providers' => $providers,
+            'connectedCount' => $connections->filter(fn (Integration $integration): bool => $integration->isHealthy())->count(),
+            'campaigns' => Campaign::where('status', CampaignStatus::Active->value)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'provider' => ['required', Rule::in(['instagram', 'tiktok', 'youtube', 'x', 'linkedin', 'shopify', 'ga4'])],
-            'name' => ['required', 'string', 'max:120'],
+            'provider' => ['required', Rule::in(array_keys(config('integrations.providers')))],
+            'name' => ['nullable', 'string', 'max:120'],
             'access_token' => ['nullable', 'string', 'max:4096'],
             'auto_verify' => ['boolean'],
+            'scope' => ['required', Rule::in(['workspace', 'campaign'])],
+            'campaign_id' => [
+                Rule::requiredIf($request->input('scope') === 'campaign'),
+                'nullable',
+                Rule::exists('campaigns', 'id')->where(fn ($query) => $query
+                    ->where('tenant_id', $request->user()->tenant_id)
+                    ->where('status', CampaignStatus::Active->value)),
+            ],
         ]);
 
-        if (Integration::where('provider', $data['provider'])->exists()) {
-            return back()->withInput()->withErrors(['provider' => 'That provider is already configured.']);
-        }
-
-        $token = $data['access_token'] ?? null;
-        Integration::create([
+        $integration = Integration::firstOrNew([
             'tenant_id' => $request->user()->tenant_id,
             'provider' => $data['provider'],
-            'name' => $data['name'],
-            'status' => IntegrationStatus::Disconnected->value,
-            'credentials' => $token ? ['access_token' => $token] : null,
+        ]);
+        $token = trim((string) ($data['access_token'] ?? ''));
+        $credentials = $integration->credentials ?? [];
+
+        if ($token !== '') {
+            $credentials['access_token'] = $token;
+        }
+
+        $integration->fill([
+            'name' => $data['name'] ?: config('integrations.providers.'.$data['provider'].'.name'),
+            'scope' => $data['scope'],
+            'campaign_id' => $data['scope'] === 'campaign' ? $data['campaign_id'] : null,
+            'credentials' => $credentials ?: null,
             'auto_verify' => $request->boolean('auto_verify'),
         ]);
+        $integration->save();
 
-        return back()->with('success', 'Integration added. Connect it when provider credentials are ready.');
+        if (! empty($credentials['access_token'])) {
+            $integration->markConnected();
+        } else {
+            $integration->markDisconnected('Authentication is needed to connect this provider.');
+        }
+
+        return redirect()->route('partnerintegrations')->with('success', 'Integration settings saved.');
     }
 
     public function connect(Request $request, Integration $integration): RedirectResponse
