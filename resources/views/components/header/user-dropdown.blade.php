@@ -1,6 +1,7 @@
 <div class="relative" x-data="{
     isOpen: false,
     subDropdownOpen: false,
+    showLogoutModal: false,
     currentLocale: '{{ app()->getLocale() }}' || localStorage.getItem('locale') || (localStorage.getItem('dir') === 'rtl' ? 'ar' : 'en'),
     languages: [
         {
@@ -40,6 +41,16 @@
         document.documentElement.setAttribute('dir', dir);
         document.documentElement.setAttribute('lang', lang.id);
         window.location.href = '/locale/' + lang.id;
+    },
+    openLogoutModal() {
+        this.showLogoutModal = true;
+        this.closeDropdown();
+    },
+    closeLogoutModal() {
+        this.showLogoutModal = false;
+    },
+    confirmLogout() {
+        this.$refs.logoutForm.submit();
     }
 }" @click.outside="closeDropdown()">
     <!-- User Trigger -->
@@ -212,14 +223,46 @@
         </ul>
 
         <!-- Sign Out -->
-        <form method="POST" action="{{ route('logout') }}" class="mt-3">
-            @csrf
-            <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 group text-theme-sm hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300">
+        <div class="mt-3">
+            <button type="button" @click="openLogoutModal()" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 font-medium text-gray-700 group text-theme-sm hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300">
                 <span class="text-gray-500 dark:group-hover:text-gray-300">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </span>
                 {{ __('Sign out') }}
             </button>
-        </form>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div x-show="showLogoutModal"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-999999"
+         style="display: none;"
+         @keydown.escape.window="closeLogoutModal()"
+         @click.self="closeLogoutModal()">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4 z-10">
+            <div class="relative w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-xl dark:border-gray-800 dark:bg-white/[0.03]">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">{{ __('Sign out') }}</h3>
+                    <button type="button" @click="closeLogoutModal()" class="rounded-lg p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white" aria-label="{{ __('Close') }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <p class="mb-6 text-gray-600 dark:text-gray-400">{{ __('Are you sure you want to sign out?') }}</p>
+                <div class="flex justify-end gap-3">
+                    <button type="button" @click="closeLogoutModal()" class="flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">{{ __('Cancel') }}</button>
+                    <form method="POST" action="{{ route('logout') }}" x-ref="logoutForm">
+                        @csrf
+                        <button type="button" @click="confirmLogout()" class="flex items-center justify-center rounded-lg bg-error-500 px-4 py-2 text-sm font-medium text-white hover:bg-error-600">{{ __('Sign out') }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
