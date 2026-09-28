@@ -9,6 +9,7 @@ use App\Http\Controllers\DeliverableController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -28,6 +29,7 @@ Route::get('/health/db', function () {
             'pdo_pgsql' => extension_loaded('pdo_pgsql'),
             'tenants' => Schema::hasTable('tenants'),
             'users' => Schema::hasTable('users'),
+            'password_reset_tokens' => Schema::hasTable('password_reset_tokens'),
         ]);
     } catch (Throwable $e) {
         report($e);
@@ -45,6 +47,11 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
     Route::get('/signup', [AuthController::class, 'showRegister'])->name('signup');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('register');
+
+    Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetController::class, 'store'])->middleware('throttle:6,1')->name('password.email');
+    Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:6,1')->name('password.update');
 });
 
 Route::middleware(['auth', 'tenant'])->group(function (): void {

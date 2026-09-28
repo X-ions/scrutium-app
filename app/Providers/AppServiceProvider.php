@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Database\Connections\PostgresConnection;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Connection;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -38,6 +40,28 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        ResetPassword::createUrlUsing(function (object $notifiable, string $token): string {
+            return url(route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ], false));
+        });
+
+        ResetPassword::toMailUsing(function (object $notifiable, string $token): MailMessage {
+            $url = url(route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ], false));
+
+            return (new MailMessage)
+                ->subject('Reset your Scrutium password')
+                ->greeting('Reset your password')
+                ->line('We received a request to reset the password for your Scrutium workspace.')
+                ->action('Choose a new password', $url)
+                ->line('This link expires in 60 minutes and can be used only once.')
+                ->line('If you did not request this, you can ignore this email.');
+        });
+
         $autoMigrate = filter_var(env('SCRUTIUM_AUTO_MIGRATE', true), FILTER_VALIDATE_BOOLEAN);
         if ($autoMigrate && env('DB_CONNECTION') === 'pgsql') {
             try {
@@ -45,7 +69,7 @@ class AppServiceProvider extends ServiceProvider
                 $lock = @fopen($lockPath, 'c');
                 if ($lock && flock($lock, LOCK_EX | LOCK_NB)) {
                     try {
-                        if (! Schema::hasTable('tenants')) {
+                        if (! Schema::hasTable('tenants') || ! Schema::hasTable('password_reset_tokens')) {
                             Artisan::call('migrate', ['--force' => true]);
                         }
                     } finally {

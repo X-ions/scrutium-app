@@ -21,7 +21,10 @@
                     class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-400 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
             </div>
             <div>
-                <label for="password" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                <div class="mb-2 flex items-center justify-between">
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                    <a href="{{ route('password.request') }}" class="text-sm font-medium text-brand-600 hover:underline dark:text-brand-400">Forgot password?</a>
+                </div>
                 <input id="password" name="password" type="password" required autocomplete="current-password"
                     class="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:border-brand-400 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
             </div>
