@@ -33,6 +33,21 @@ it('registers a workspace and authenticates its owner', function () {
         ->and($user->canManageWorkspace())->toBeTrue();
 });
 
+it('shows the workspace owner summary in the sidebar', function () {
+    $owner = User::factory()->owner()->create([
+        'name' => 'Alicia Stone',
+        'job_title' => 'Workspace owner',
+    ]);
+    $owner->tenant->forceFill(['name' => 'Scrutium Inc'])->save();
+
+    $this->actingAs($owner)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('SI')
+        ->assertSee('Scrutium Inc')
+        ->assertSee('Workspace owner');
+});
+
 it('keeps guests out and signs a user in', function () {
     $this->get('/campaigns')->assertRedirect(route('login'));
 

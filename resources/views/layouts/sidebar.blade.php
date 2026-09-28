@@ -2,8 +2,6 @@
     use App\Helpers\MenuHelper;
     $menuGroups = MenuHelper::getMenuGroups();
     $currentPath = request()->path();
-    $workspace = auth()->user()?->tenant;
-    $authUser = auth()->user();
 @endphp
 
 <aside id="sidebar"
@@ -103,15 +101,25 @@
         </nav>
     </div>
 
-    @if ($authUser)
-        <div class="mt-auto border-t border-gray-200 py-5 dark:border-gray-800">
-            <div class="flex items-center gap-3" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : ''">
-                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">{{ $authUser->initials() }}</span>
+    <div class="mt-auto border-t border-gray-200 py-5 dark:border-gray-800">
+        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-white/[0.03]"
+            :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'flex justify-center' : ''">
+            <div class="flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
+                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">gbf</span>
                 <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="min-w-0">
-                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $authUser->name }}</p>
-                    <p class="truncate text-xs text-gray-400">{{ $authUser->job_title ?: $authUser->role()->name }}</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">✦ DISCOVER</p>
                 </div>
             </div>
+
+            <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                <p class="font-medium text-gray-800 dark:text-white/90">Campaign tools</p>
+                <p class="font-medium text-gray-800 dark:text-white/90">Partner integrations</p>
+                <p class="font-medium text-gray-800 dark:text-white/90">Featured services</p>
+                <button type="button" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">
+                    Explore
+                    <span aria-hidden="true">→</span>
+                </button>
+            </div>
         </div>
-    @endif
+    </div>
 </aside>
