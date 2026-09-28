@@ -40,15 +40,6 @@ class AuthController extends Controller
         $user = $request->user();
         $user->forceFill(['last_active_at' => now()])->save();
 
-        if (! $user->hasVerifiedEmail()) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('verification.notice')
-                ->with('status', 'Please verify your email address before signing in.');
-        }
-
         return redirect()->intended(route('dashboard'));
     }
 
