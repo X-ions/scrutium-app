@@ -7,7 +7,7 @@
 @endphp
 
 <aside id="sidebar"
-    class="fixed flex flex-col mt-0 top-0 px-5 start-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 ltr:border-r rtl:border-l border-gray-200 w-[90px] [.sidebar-expanded_&]:min-w-[290px]"
+    class="fixed top-0 mt-0 flex h-screen flex-col px-5 start-0 border border-gray-200/80 bg-white/90 text-gray-900 shadow-[0_0_0_1px_rgba(16,24,40,0.02),0_12px_32px_-18px_rgba(15,28,63,0.35)] backdrop-blur-sm transition-all duration-300 ease-in-out z-99999 ltr:border-r ltr:rounded-r-3xl rtl:border-l rtl:rounded-l-3xl dark:border-gray-800 dark:bg-gray-900/90 dark:text-white/90 w-[90px] [.sidebar-expanded_&]:min-w-[290px]"
     x-data="{
         openSubmenus: {},
         init() {
@@ -49,25 +49,25 @@
     @mouseenter="if (!$store.sidebar.isExpanded) $store.sidebar.setHovered(true)"
     @mouseleave="$store.sidebar.setHovered(false)">
 
-    <div class="pt-8 pb-6 flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
-        <a href="{{ url('/') }}" class="flex items-center gap-3 min-w-0">
-            <img src="{{ asset('images/logo/logo.png') }}" alt="Scrutium" class="h-9 w-9 shrink-0 rounded-xl object-cover bg-white" />
-            <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="truncate text-lg font-semibold tracking-tight text-gray-800 dark:text-white/90">Scrutium</span>
+    <div class="flex items-center gap-2 pb-6 pt-7" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
+        <a href="{{ url('/') }}" class="flex min-w-0 items-center gap-3">
+            <img src="{{ asset('images/logo/logo.png') }}" alt="Scrutium" class="h-9 w-9 shrink-0 rounded-xl border border-gray-200 bg-white object-cover shadow-sm" />
+            <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="truncate text-lg font-semibold tracking-[-0.02em] text-gray-800 dark:text-white/90">Scrutium</span>
         </a>
     </div>
 
     @if ($workspace)
-        <div class="relative mb-6 hidden rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-white/5 [.sidebar-expanded_&]:block"
+        <div class="relative mb-6 hidden rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 px-3 py-2.5 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5 [.sidebar-expanded_&]:block"
             x-data="{ workspaceMenuOpen: false }"
             @click.outside="workspaceMenuOpen = false"
             @keydown.escape.window="workspaceMenuOpen = false">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
-                    <p class="text-[10px] uppercase tracking-wider text-gray-400">Workspace</p>
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400">Workspace</p>
                     <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
                 </div>
                 <button type="button"
-                    class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
                     aria-label="Open workspace team menu"
                     aria-haspopup="true"
                     :aria-expanded="workspaceMenuOpen.toString()"
@@ -80,7 +80,7 @@
                 </button>
                 @if (auth()->user()?->canManageWorkspace())
                     <button type="button"
-                        class="grid h-7 w-7 shrink-0 place-items-center rounded-md text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                        class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
                         aria-label="{{ __('Open workspace settings') }}"
                         title="{{ __('Workspace settings') }}"
                         @click="$dispatch('workspace-settings-open', { anchor: $el })">
@@ -127,7 +127,7 @@
             <div class="flex flex-col gap-4">
                 @foreach ($menuGroups as $groupIndex => $menuGroup)
                     <div>
-                        <h2 class="mb-4 text-xs uppercase flex leading-[20px] text-gray-400"
+                        <h2 class="mb-3 flex text-[10px] uppercase leading-[20px] tracking-[0.18em] text-gray-400"
                             :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'lg:justify-center' : 'justify-start'">
                             <template x-if="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen">
                                 <span>{{ __($menuGroup['title']) }}</span>
@@ -163,10 +163,10 @@
     </div>
 
     <div class="mt-auto border-t border-gray-200 py-5 dark:border-gray-800">
-        <div class="rounded-2xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-white/[0.03]"
+        <div class="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 p-3 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5"
             :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'flex justify-center' : ''">
             <div class="flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
-                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">gbf</span>
+                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 shadow-sm ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20">gbf</span>
                 <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="min-w-0">
                     <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">✦ DISCOVER</p>
                 </div>
@@ -175,7 +175,7 @@
             <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <a href="{{ route('campaign-tools') }}" @class([
                     'flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium transition-colors',
-                    'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' => request()->routeIs('campaign-tools'),
+                    'bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20' => request()->routeIs('campaign-tools'),
                     'text-gray-700 hover:bg-white hover:text-brand-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-brand-300' => ! request()->routeIs('campaign-tools'),
                 ]) @if(request()->routeIs('campaign-tools')) aria-current="page" @endif>
                     <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
