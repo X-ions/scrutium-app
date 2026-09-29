@@ -122,6 +122,33 @@
         </div>
     @endif
 
+    <div class="mb-4 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 p-3 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5"
+        :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'flex justify-center' : ''">
+        <div class="flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 shadow-sm ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20">gbf</span>
+            <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="min-w-0">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">✦ DISCOVER</p>
+            </div>
+        </div>
+
+        <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <a href="{{ route('campaign-tools') }}" @class([
+                'flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium transition-colors',
+                'bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20' => request()->routeIs('campaign-tools'),
+                'text-gray-700 hover:bg-white hover:text-brand-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-brand-300' => ! request()->routeIs('campaign-tools'),
+            ]) @if(request()->routeIs('campaign-tools')) aria-current="page" @endif>
+                <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
+                <span>Campaign tools</span>
+            </a>
+            <a href="{{ route('partnerintegrations') }}" class="block font-medium text-gray-800 transition-colors hover:text-brand-600 dark:text-white/90 dark:hover:text-brand-300">{{ __('Partner integrations') }}</a>
+            <p class="font-medium text-gray-800 dark:text-white/90">Featured services</p>
+            <button type="button" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">
+                Explore
+                <span aria-hidden="true">→</span>
+            </button>
+        </div>
+    </div>
+
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar flex-1">
         <nav class="mb-4">
             <div class="flex flex-col gap-2">
@@ -164,32 +191,12 @@
         </nav>
     </div>
 
-    <div class="mt-auto border-t border-gray-200 py-5 dark:border-gray-800">
-        <div class="rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 p-3 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5"
-            :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'flex justify-center' : ''">
-            <div class="flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
-                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 shadow-sm ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20">gbf</span>
-                <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="min-w-0">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">✦ DISCOVER</p>
-                </div>
-            </div>
-
-            <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                <a href="{{ route('campaign-tools') }}" @class([
-                    'flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium transition-colors',
-                    'bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20' => request()->routeIs('campaign-tools'),
-                    'text-gray-700 hover:bg-white hover:text-brand-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-brand-300' => ! request()->routeIs('campaign-tools'),
-                ]) @if(request()->routeIs('campaign-tools')) aria-current="page" @endif>
-                    <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
-                    <span>Campaign tools</span>
-                </a>
-                <a href="{{ route('partnerintegrations') }}" class="block font-medium text-gray-800 transition-colors hover:text-brand-600 dark:text-white/90 dark:hover:text-brand-300">{{ __('Partner integrations') }}</a>
-                <p class="font-medium text-gray-800 dark:text-white/90">Featured services</p>
-                <button type="button" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">
-                    Explore
-                    <span aria-hidden="true">→</span>
-                </button>
-            </div>
-        </div>
+    <div class="mt-auto flex justify-center border-t border-gray-200 py-5 dark:border-gray-800">
+        <button type="button" aria-label="Add" title="Add"
+            class="grid h-10 w-10 place-items-center rounded-xl bg-blue-light-400 text-gray-950 shadow-lg shadow-blue-light-500/40 ring-2 ring-blue-light-300/70 transition hover:bg-blue-light-300 focus:outline-none focus:ring-2 focus:ring-blue-light-500 focus:ring-offset-2 dark:ring-offset-gray-900">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
     </div>
 </aside>
