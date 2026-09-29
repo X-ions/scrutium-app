@@ -77,13 +77,8 @@ class MenuHelper
         return [
             [
                 'icon' => 'dashboard',
-                'name' => 'Dashboard',
+                'name' => 'Home',
                 'path' => '/socialhub',
-            ],
-            [
-                'icon' => 'pages',
-                'name' => 'Composer',
-                'path' => '/socialhub/posts/create',
             ],
             [
                 'icon' => 'calendar',
@@ -92,13 +87,8 @@ class MenuHelper
             ],
             [
                 'icon' => 'tables',
-                'name' => 'Media library',
+                'name' => 'Library',
                 'path' => '/socialhub/media',
-            ],
-            [
-                'icon' => 'chat',
-                'name' => 'Comments',
-                'path' => '/socialhub/comments',
             ],
             [
                 'icon' => 'charts',
@@ -107,7 +97,7 @@ class MenuHelper
             ],
             [
                 'icon' => 'user-profile',
-                'name' => 'Social accounts',
+                'name' => 'Connected',
                 'path' => '/socialhub/accounts',
             ],
         ];
@@ -117,7 +107,7 @@ class MenuHelper
     {
         return [
             [
-                'title' => 'SocialHub',
+                'title' => '',
                 'items' => self::getSocialHubItems(),
             ],
             [

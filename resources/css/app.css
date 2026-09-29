@@ -247,7 +247,7 @@
 }
 
 @utility menu-item-active {
-  @apply bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-100 dark:bg-brand-500/[0.12] dark:text-brand-300 dark:ring-brand-400/20;
+  @apply bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200 rounded-2xl dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/20;
 }
 
 @utility menu-item-inactive {
@@ -259,7 +259,7 @@
 }
 
 @utility menu-item-icon-active {
-  @apply text-brand-600 dark:text-brand-300;
+  @apply text-emerald-700 dark:text-emerald-300;
 }
 
 @utility menu-item-icon-inactive {
