@@ -56,71 +56,14 @@
         </a>
     </div>
 
-    @if ($workspace)
-        <div class="relative mb-6 hidden rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 px-3 py-2.5 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5 [.sidebar-expanded_&]:block"
-            x-data="{ workspaceMenuOpen: false }"
-            @click.outside="workspaceMenuOpen = false"
-            @keydown.escape.window="workspaceMenuOpen = false">
-            <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                    <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400">Workspace</p>
-                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
-                </div>
-                <button type="button"
-                    class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
-                    aria-label="Open workspace team menu"
-                    aria-haspopup="true"
-                    :aria-expanded="workspaceMenuOpen.toString()"
-                    @click="workspaceMenuOpen = !workspaceMenuOpen">
-                    <svg class="h-[18px] w-[18px] text-blue-light-600 dark:text-blue-light-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M11.98 2.1c1.05 5.8 2.12 6.87 7.92 7.92-5.8 1.05-6.87 2.12-7.92 7.92-1.05-5.8-2.12-6.87-7.92-7.92 5.8-1.05 6.87-2.12 7.92-7.92Z" />
-                        <path d="M19.1 15.1c.43 2.36.87 2.8 3.23 3.23-2.36.43-2.8.87-3.23 3.23-.43-2.36-.87-2.8-3.23-3.23 2.36-.43 2.8-.87 3.23-3.23Z" />
-                        <path d="M5 2.5c.3 1.64.61 1.95 2.25 2.25C5.61 5.05 5.3 5.36 5 7 4.7 5.36 4.39 5.05 2.75 4.75 4.39 4.45 4.7 4.14 5 2.5Z" />
-                    </svg>
-                </button>
-                @if (auth()->user()?->canManageWorkspace())
-                    <button type="button"
-                        class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
-                        aria-label="{{ __('Open workspace settings') }}"
-                        title="{{ __('Workspace settings') }}"
-                        @click="$dispatch('workspace-settings-open', { anchor: $el })">
-                        <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                            <path d="M10 2.25a2.1 2.1 0 0 1 2.05 1.65l.13.57c.38.13.74.34 1.06.61l.56-.19a2.1 2.1 0 0 1 2.52 1.02 2.1 2.1 0 0 1-.5 2.67l-.44.38c.07.41.07.82 0 1.23l.44.38a2.1 2.1 0 0 1 .5 2.67 2.1 2.1 0 0 1-2.52 1.02l-.56-.19c-.32.27-.68.48-1.06.61l-.13.57A2.1 2.1 0 0 1 10 16.9a2.1 2.1 0 0 1-2.05-1.65l-.13-.57a4.1 4.1 0 0 1-1.06-.61l-.56.19a2.1 2.1 0 0 1-2.52-1.02 2.1 2.1 0 0 1 .5-2.67l.44-.38a3.7 3.7 0 0 1 0-1.23l-.44-.38a2.1 2.1 0 0 1-.5-2.67 2.1 2.1 0 0 1 2.52-1.02l.56.19c.32-.27.68-.48 1.06-.61l.13-.57A2.1 2.1 0 0 1 10 2.25Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" />
-                            <circle cx="10" cy="9.55" r="2.2" stroke="currentColor" stroke-width="1.35" />
-                        </svg>
-                    </button>
-                @endif
-            </div>
-
-            <div x-cloak x-show="workspaceMenuOpen" x-transition.origin.top.right
-                class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
-                role="menu">
-                @if (auth()->user()?->canManageWorkspace())
-                    <div class="space-y-1 border-b border-gray-100 p-2 dark:border-gray-800">
-                        <a href="{{ route('settings') }}" role="menuitem"
-                            class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Create Team</a>
-                        <a href="{{ route('settings') }}" role="menuitem"
-                            class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Invite</a>
-                    </div>
-                @endif
-                <div class="max-h-56 overflow-y-auto p-2">
-                    <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Team members</p>
-                    @forelse ($teamMembers as $member)
-                        <div class="flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
-                            <span class="truncate text-gray-700 dark:text-gray-200">{{ $member->name }}</span>
-                            @if ($member->is(auth()->user()))
-                                <span class="shrink-0 text-xs text-gray-400">You</span>
-                            @else
-                                <span class="shrink-0 text-xs text-gray-400">{{ $member->role()->label() }}</span>
-                            @endif
-                        </div>
-                    @empty
-                        <p class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No team members yet.</p>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-    @endif
+    <div class="mb-4 flex justify-center" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
+        <button type="button" aria-label="Add" title="Add"
+            class="grid h-10 w-10 place-items-center rounded-xl bg-blue-light-400 text-gray-950 shadow-lg shadow-blue-light-500/40 ring-2 ring-blue-light-300/70 transition hover:bg-blue-light-300 focus:outline-none focus:ring-2 focus:ring-blue-light-500 focus:ring-offset-2 dark:ring-offset-gray-900">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
 
     <div class="mb-4 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 p-3 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5"
         :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'flex justify-center' : ''">
@@ -191,12 +134,69 @@
         </nav>
     </div>
 
-    <div class="mt-auto flex justify-center border-t border-gray-200 py-5 dark:border-gray-800">
-        <button type="button" aria-label="Add" title="Add"
-            class="grid h-10 w-10 place-items-center rounded-xl bg-blue-light-400 text-gray-950 shadow-lg shadow-blue-light-500/40 ring-2 ring-blue-light-300/70 transition hover:bg-blue-light-300 focus:outline-none focus:ring-2 focus:ring-blue-light-500 focus:ring-offset-2 dark:ring-offset-gray-900">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        </button>
-    </div>
+    @if ($workspace)
+        <div class="relative mt-auto hidden rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 px-3 py-2.5 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5 [.sidebar-expanded_&]:block"
+            x-data="{ workspaceMenuOpen: false }"
+            @click.outside="workspaceMenuOpen = false"
+            @keydown.escape.window="workspaceMenuOpen = false">
+            <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400">Workspace</p>
+                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
+                </div>
+                <button type="button"
+                    class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    aria-label="Open workspace team menu"
+                    aria-haspopup="true"
+                    :aria-expanded="workspaceMenuOpen.toString()"
+                    @click="workspaceMenuOpen = !workspaceMenuOpen">
+                    <svg class="h-[18px] w-[18px] text-blue-light-600 dark:text-blue-light-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M11.98 2.1c1.05 5.8 2.12 6.87 7.92 7.92-5.8 1.05-6.87 2.12-7.92 7.92-1.05-5.8-2.12-6.87-7.92-7.92 5.8-1.05 6.87-2.12 7.92-7.92Z" />
+                        <path d="M19.1 15.1c.43 2.36.87 2.8 3.23 3.23-2.36.43-2.8.87-3.23 3.23-.43-2.36-.87-2.8-3.23-3.23 2.36-.43 2.8-.87 3.23-3.23Z" />
+                        <path d="M5 2.5c.3 1.64.61 1.95 2.25 2.25C5.61 5.05 5.3 5.36 5 7 4.7 5.36 4.39 5.05 2.75 4.75 4.39 4.45 4.7 4.14 5 2.5Z" />
+                    </svg>
+                </button>
+                @if (auth()->user()?->canManageWorkspace())
+                    <button type="button"
+                        class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                        aria-label="{{ __('Open workspace settings') }}"
+                        title="{{ __('Workspace settings') }}"
+                        @click="$dispatch('workspace-settings-open', { anchor: $el })">
+                        <svg class="h-[18px] w-[18px]" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M10 2.25a2.1 2.1 0 0 1 2.05 1.65l.13.57c.38.13.74.34 1.06.61l.56-.19a2.1 2.1 0 0 1 2.52 1.02 2.1 2.1 0 0 1-.5 2.67l-.44.38c.07.41.07.82 0 1.23l.44.38a2.1 2.1 0 0 1 .5 2.67 2.1 2.1 0 0 1-2.52 1.02l-.56-.19c-.32.27-.68.48-1.06.61l-.13.57A2.1 2.1 0 0 1 10 16.9a2.1 2.1 0 0 1-2.05-1.65l-.13-.57a4.1 4.1 0 0 1-1.06-.61l-.56.19a2.1 2.1 0 0 1-2.52-1.02 2.1 2.1 0 0 1 .5-2.67l.44-.38a3.7 3.7 0 0 1 0-1.23l-.44-.38a2.1 2.1 0 0 1-.5-2.67 2.1 2.1 0 0 1 2.52-1.02l.56.19c.32-.27.68-.48 1.06-.61l.13-.57A2.1 2.1 0 0 1 10 2.25Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" />
+                            <circle cx="10" cy="9.55" r="2.2" stroke="currentColor" stroke-width="1.35" />
+                        </svg>
+                    </button>
+                @endif
+            </div>
+
+            <div x-cloak x-show="workspaceMenuOpen" x-transition.origin.top.right
+                class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                role="menu">
+                @if (auth()->user()?->canManageWorkspace())
+                    <div class="space-y-1 border-b border-gray-100 p-2 dark:border-gray-800">
+                        <a href="{{ route('settings') }}" role="menuitem"
+                            class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Create Team</a>
+                        <a href="{{ route('settings') }}" role="menuitem"
+                            class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Invite</a>
+                    </div>
+                @endif
+                <div class="max-h-56 overflow-y-auto p-2">
+                    <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Team members</p>
+                    @forelse ($teamMembers as $member)
+                        <div class="flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
+                            <span class="truncate text-gray-700 dark:text-gray-200">{{ $member->name }}</span>
+                            @if ($member->is(auth()->user()))
+                                <span class="shrink-0 text-xs text-gray-400">You</span>
+                            @else
+                                <span class="shrink-0 text-xs text-gray-400">{{ $member->role()->label() }}</span>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No team members yet.</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    @endif
 </aside>
