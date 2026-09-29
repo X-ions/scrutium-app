@@ -9,8 +9,28 @@ class MenuHelper
         return [
             [
                 'icon' => 'dashboard',
-                'name' => 'Overview',
+                'name' => 'Home',
                 'path' => '/',
+            ],
+            [
+                'icon' => 'calendar',
+                'name' => 'Calendar',
+                'path' => '/socialhub/calendar',
+            ],
+            [
+                'icon' => 'tables',
+                'name' => 'Library',
+                'path' => '/socialhub/media',
+            ],
+            [
+                'icon' => 'charts',
+                'name' => 'Analytics',
+                'path' => '/socialhub/analytics',
+            ],
+            [
+                'icon' => 'user-profile',
+                'name' => 'Connected',
+                'path' => '/socialhub/accounts',
             ],
             [
                 'icon' => 'calendar',
@@ -108,10 +128,6 @@ class MenuHelper
         return [
             [
                 'title' => '',
-                'items' => self::getSocialHubItems(),
-            ],
-            [
-                'title' => 'Workspace',
                 'items' => self::getMainNavItems(),
             ],
             [
