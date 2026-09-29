@@ -66,16 +66,18 @@
         </a>
     </div>
 
-    <div class="mb-4 flex justify-center" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
-        <button type="button" aria-label="Add" title="Add"
-            class="grid h-10 w-10 place-items-center rounded-xl bg-blue-light-400 text-gray-950 shadow-lg shadow-blue-light-500/40 ring-2 ring-blue-light-300/70 transition hover:bg-blue-light-300 focus:outline-none focus:ring-2 focus:ring-blue-light-500 focus:ring-offset-2 dark:ring-offset-gray-900">
+    <div class="mb-4 w-full">
+        <button type="button" aria-label="{{ __('Create') }}" title="{{ __('Create') }}"
+            class="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-light-400 px-3 text-gray-950 shadow-lg shadow-blue-light-500/40 ring-2 ring-blue-light-300/70 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-blue-light-300 hover:shadow-xl hover:shadow-blue-light-500/50 hover:ring-blue-light-200 active:translate-y-0 active:scale-[0.99] active:bg-blue-light-500 active:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-light-500 focus-visible:ring-offset-2 dark:ring-offset-gray-900"
+            :class="($store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen) ? 'justify-start px-4' : 'justify-center'">
             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
+            <span x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="text-sm font-semibold">{{ __('Create') }}</span>
         </button>
     </div>
 
-    <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar flex-1">
+    <div class="flex min-h-0 flex-col overflow-hidden duration-300 ease-linear no-scrollbar flex-1">
         <nav class="mb-4">
             <div class="flex flex-col gap-2">
                 @foreach ($menuGroups as $groupIndex => $menuGroup)
