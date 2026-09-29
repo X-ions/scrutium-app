@@ -8,7 +8,7 @@ class MenuHelper
     {
         return [
             [
-                'icon' => 'dashboard',
+                'icon' => 'home',
                 'name' => 'Home',
                 'path' => '/',
             ],
@@ -18,22 +18,22 @@ class MenuHelper
                 'path' => '/socialhub/calendar',
             ],
             [
-                'icon' => 'tables',
+                'icon' => 'library',
                 'name' => 'Library',
                 'path' => '/socialhub/media',
             ],
             [
-                'icon' => 'charts',
+                'icon' => 'analytics',
                 'name' => 'Analytics',
                 'path' => '/socialhub/analytics',
             ],
             [
-                'icon' => 'user-profile',
+                'icon' => 'connected',
                 'name' => 'Connected',
                 'path' => '/socialhub/accounts',
             ],
             [
-                'icon' => 'calendar',
+                'icon' => 'campaigns',
                 'name' => 'Campaigns',
                 'path' => '/campaigns',
             ],
@@ -43,7 +43,7 @@ class MenuHelper
                 'path' => '/influencers',
             ],
             [
-                'icon' => 'task',
+                'icon' => 'deliverables',
                 'name' => 'Deliverables',
                 'path' => '/deliverables',
             ],
@@ -52,19 +52,19 @@ class MenuHelper
                 'name' => 'Content',
                 'path' => '/content',
             ],
-            ['icon' => 'charts', 'name' => 'Performance', 'path' => '/performance'],
+            ['icon' => 'analytics', 'name' => 'Performance', 'path' => '/performance'],
             [
-                'icon' => 'task',
+                'icon' => 'scoring',
                 'name' => 'Scoring',
                 'path' => '/scoring',
             ],
             [
-                'icon' => 'tables',
+                'icon' => 'reports',
                 'name' => 'Reports',
                 'path' => '/reports',
             ],
             [
-                'icon' => 'chat',
+                'icon' => 'alerts',
                 'name' => 'Alerts',
                 'path' => '/alerts',
             ],
@@ -75,12 +75,12 @@ class MenuHelper
     {
         return [
             [
-                'icon' => 'forms',
+                'icon' => 'integrations',
                 'name' => 'Integrations',
                 'path' => '/integrations',
             ],
             [
-                'icon' => 'authentication',
+                'icon' => 'settings',
                 'name' => 'Settings',
                 'path' => '/settings',
             ],
@@ -145,6 +145,17 @@ class MenuHelper
     public static function getIconSvg($iconName)
     {
         $icons = [
+            'home' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m3 10 9-7 9 7M5 9v11h14V9M9 20v-6h6v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'library' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="9" r="1.5" stroke="currentColor" stroke-width="1.7"/><path d="m21 15-5-5L5 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'analytics' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4v16h16M8 16v-5m4 5V8m4 8v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'connected' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.07 0l3-3A5 5 0 0 0 13 2.93l-1.72 1.72m2.72 6.35a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21.07l1.72-1.72" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'campaigns' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 11v2a1 1 0 0 0 1 1h3l10 5V5L7 10H4a1 1 0 0 0-1 1Zm4 3 2 6h3l-2-5m7-8 3-2m-3 12 3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'deliverables' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 4.5V3h6v1.5M8.5 13l2.3 2.3 4.7-4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'scoring' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.5 15a9 9 0 1 0-17 0M12 13l4-4M7 18h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="1.5" stroke="currentColor" stroke-width="1.7"/></svg>',
+            'reports' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13H7a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2Zm7 0v4h4M8.5 16v-2m3 2v-4m3 4v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'alerts' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 12h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'integrations' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="2.5" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="6" r="2.5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="18" r="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 6h7m-8 2 3.2 7.6m4.8-7.6-3.2 7.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            'settings' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6h3m4 0h9M4 12h9m4 0h3M4 18h4m4 0h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="9" cy="6" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="15" cy="12" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="10" cy="18" r="2" stroke="currentColor" stroke-width="1.7"/></svg>',
             'shield' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.75L4.5 5.5v6.1c0 4.6 3.13 8.9 7.5 9.65 4.37-.75 7.5-5.05 7.5-9.65V5.5L12 2.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9.25 11.75L11.25 13.75L14.75 10.25" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>',
             'dashboard' => '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V8.99998C3.25 10.2426 4.25736 11.25 5.5 11.25H9C10.2426 11.25 11.25 10.2426 11.25 8.99998V5.5C11.25 4.25736 10.2426 3.25 9 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H9C9.41421 4.75 9.75 5.08579 9.75 5.5V8.99998C9.75 9.41419 9.41421 9.74998 9 9.74998H5.5C5.08579 9.74998 4.75 9.41419 4.75 8.99998V5.5ZM5.5 12.75C4.25736 12.75 3.25 13.7574 3.25 15V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H9C10.2426 20.75 11.25 19.7427 11.25 18.5V15C11.25 13.7574 10.2426 12.75 9 12.75H5.5ZM4.75 15C4.75 14.5858 5.08579 14.25 5.5 14.25H9C9.41421 14.25 9.75 14.5858 9.75 15V18.5C9.75 18.9142 9.41421 19.25 9 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V15ZM12.75 5.5C12.75 4.25736 13.7574 3.25 15 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V8.99998C20.75 10.2426 19.7426 11.25 18.5 11.25H15C13.7574 11.25 12.75 10.2426 12.75 8.99998V5.5ZM15 4.75C14.5858 4.75 14.25 5.08579 14.25 5.5V8.99998C14.25 9.41419 14.5858 9.74998 15 9.74998H18.5C18.9142 9.74998 19.25 9.41419 19.25 8.99998V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H15ZM15 12.75C13.7574 12.75 12.75 13.7574 12.75 15V18.5C12.75 19.7426 13.7574 20.75 15 20.75H18.5C19.7426 20.75 20.75 19.7427 20.75 18.5V15C20.75 13.7574 19.7426 12.75 18.5 12.75H15ZM14.25 15C14.25 14.5858 14.5858 14.25 15 14.25H18.5C18.9142 14.25 19.25 14.5858 19.25 15V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15C14.5858 19.25 14.25 18.9142 14.25 18.5V15Z" fill="currentColor"></path></svg>',
 
