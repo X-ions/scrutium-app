@@ -86,19 +86,19 @@ class TrustedDevice extends Model
 
     public function isConfirmed(): bool
     {
-        return !is_null($this->confirmed_at);
+        return ! is_null($this->confirmed_at);
     }
 
     public function isPending(): bool
     {
-        return is_null($this->confirmed_at) 
-            && is_null($this->revoked_at) 
+        return is_null($this->confirmed_at)
+            && is_null($this->revoked_at)
             && $this->token_expires_at?->isFuture();
     }
 
     public function isRevoked(): bool
     {
-        return !is_null($this->revoked_at);
+        return ! is_null($this->revoked_at);
     }
 
     public function isTokenValid(): bool
@@ -114,7 +114,7 @@ class TrustedDevice extends Model
             'confirmation_token' => null,
             'token_expires_at' => null,
         ]);
-        
+
         $this->device?->markTrusted($userId, $this->trust_method);
     }
 
@@ -125,7 +125,7 @@ class TrustedDevice extends Model
             'revoked_by' => $userId,
             'revoke_reason' => $reason,
         ]);
-        
+
         $this->device?->revokeTrust($userId, $reason);
     }
 
@@ -136,6 +136,7 @@ class TrustedDevice extends Model
             'confirmation_token' => $token,
             'token_expires_at' => now()->addDays(7),
         ]);
+
         return $token;
     }
 
@@ -143,4 +144,4 @@ class TrustedDevice extends Model
     {
         return $this->alias ?: $this->device?->getDisplayName() ?: 'Trusted Device';
     }
-};
+}

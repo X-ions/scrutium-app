@@ -63,6 +63,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
+            'processors' => [\App\Logging\RedactsCredentials::class],
         ],
 
         'daily' => [
@@ -71,6 +72,23 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'processors' => [\App\Logging\RedactsCredentials::class],
+        ],
+
+        // Structured channel for the publishing and analytics workers. Same
+        // redaction as the human-facing channels.
+        'structured' => [
+            'driver' => 'monolog',
+            'level' => env('LOG_LEVEL', 'debug'),
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => 'php://stdout',
+            ],
+            'formatter' => Monolog\Formatter\JsonFormatter::class,
+            'formatter_with' => [
+                'appendNewline' => true,
+            ],
+            'processors' => [\App\Logging\RedactsCredentials::class],
         ],
 
         'slack' => [
@@ -102,7 +120,7 @@ return [
                 'stream' => 'php://stderr',
             ],
             'formatter' => env('LOG_STDERR_FORMATTER'),
-            'processors' => [PsrLogMessageProcessor::class],
+            'processors' => [PsrLogMessageProcessor::class, \App\Logging\RedactsCredentials::class],
         ],
 
         'syslog' => [

@@ -2,9 +2,37 @@
 
 **Enterprise influencer marketing intelligence platform.**
 
-Campaign management, deliverable verification, performance analytics, scoring engines, and API integrations — built for brands and agencies that need end-to-end accountability from contract to financial decision.
+Campaign management, deliverable verification, performance analytics, scoring engines, and API integrations â€” built for brands and agencies that need end-to-end accountability from contract to financial decision.
 
 > UI foundation is based on [TailAdmin Laravel](https://tailadmin.com/laravel) (Laravel 12 + Tailwind CSS v4 + Alpine.js). Product design, branding, and domain features are **Scrutium**.
+
+---
+
+## SocialHub CMS
+
+This repository also contains **SocialHub CMS**: a multi-tenant social media
+management system that runs alongside the Scrutium features above. It lets a
+workspace connect social accounts, write content once, customise it per
+network, publish or schedule it through background workers, and track results in
+a unified dashboard.
+
+It reuses this application's tenant model, user roles, Tailwind/Alpine design
+system and queue infrastructure.
+
+| Document | What it covers |
+|---|---|
+| [`docs/SOCIALHUB.md`](docs/SOCIALHUB.md) | Setup, environment, OAuth configuration, architecture, testing |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Docker, workers, scheduling, backups, monitoring, rollback |
+| [`docs/ADDING-A-SOCIAL-PROVIDER.md`](docs/ADDING-A-SOCIAL-PROVIDER.md) | Adding a platform in about an hour |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System design and boundaries |
+| [`DATABASE.md`](DATABASE.md) | Schema, indexes, retention |
+| [`SOCIAL-PROVIDERS.md`](SOCIAL-PROVIDERS.md) | The provider interface and the verified capability matrix |
+| [`SECURITY.md`](SECURITY.md) | Threat model and controls |
+
+```bash
+php artisan socialhub:doctor      # what is configured, what each network can do
+php artisan test --filter=SocialHub
+```
 
 ---
 

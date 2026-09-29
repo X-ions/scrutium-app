@@ -150,7 +150,7 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('is_revoked', false)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
+                    ->orWhere('expires_at', '>', now());
             });
     }
 }

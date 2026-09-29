@@ -12,7 +12,7 @@ class DeviceFingerprint
     {
         $components = $this->extractComponents($request);
         $fingerprint = $this->hashComponents($components);
-        
+
         return $fingerprint;
     }
 
@@ -99,8 +99,8 @@ class DeviceFingerprint
 
     public function parseUserAgent(string $userAgent): array
     {
-        $cacheKey = 'ua_parser_' . hash('sha256', $userAgent);
-        
+        $cacheKey = 'ua_parser_'.hash('sha256', $userAgent);
+
         return Cache::remember($cacheKey, 86400 * 30, function () use ($userAgent) {
             return $this->doParseUserAgent($userAgent);
         });
@@ -123,13 +123,13 @@ class DeviceFingerprint
         } elseif (preg_match('/OPR\/(\d+\.\d+\.\d+\.\d+)/', $userAgent, $matches)) {
             $browser = 'Opera';
             $browserVersion = $matches[1];
-        } elseif (preg_match('/Chrome\/(\d+\.\d+\.\d+\.\d+)/', $userAgent, $matches) && !preg_match('/Edg|OPR/', $userAgent)) {
+        } elseif (preg_match('/Chrome\/(\d+\.\d+\.\d+\.\d+)/', $userAgent, $matches) && ! preg_match('/Edg|OPR/', $userAgent)) {
             $browser = 'Chrome';
             $browserVersion = $matches[1];
         } elseif (preg_match('/Firefox\/(\d+\.\d+)/', $userAgent, $matches)) {
             $browser = 'Firefox';
             $browserVersion = $matches[1];
-        } elseif (preg_match('/Safari\/(\d+\.\d+)/', $userAgent, $matches) && !preg_match('/Chrome|Edg|OPR/', $userAgent)) {
+        } elseif (preg_match('/Safari\/(\d+\.\d+)/', $userAgent, $matches) && ! preg_match('/Chrome|Edg|OPR/', $userAgent)) {
             $browser = 'Safari';
             $browserVersion = $matches[1];
         } elseif (preg_match('/MSIE (\d+\.\d+)|Trident\/.*rv:(\d+\.\d+)/', $userAgent, $matches)) {
@@ -183,9 +183,9 @@ class DeviceFingerprint
         // Extract device model for common devices
         if ($deviceType !== 'desktop') {
             if (preg_match('/iPhone(\d+,\d+)/', $userAgent, $matches)) {
-                $deviceModel = 'iPhone ' . $this->mapIPhoneModel($matches[1]);
+                $deviceModel = 'iPhone '.$this->mapIPhoneModel($matches[1]);
             } elseif (preg_match('/iPad(\d+,\d+)/', $userAgent, $matches)) {
-                $deviceModel = 'iPad ' . $this->mapIPadModel($matches[1]);
+                $deviceModel = 'iPad '.$this->mapIPadModel($matches[1]);
             } elseif (preg_match('/(SM-[A-Z]\d+)/', $userAgent, $matches)) {
                 $deviceBrand = 'Samsung';
                 $deviceModel = $matches[1];
@@ -214,6 +214,7 @@ class DeviceFingerprint
             '15,1' => '13 Pro Max', '15,2' => '13 Pro', '15,3' => '13', '15,4' => '13 mini',
             '14,1' => '12 Pro Max', '14,2' => '12 Pro', '14,3' => '12', '14,4' => '12 mini',
         ];
+
         return $models[$model] ?? $model;
     }
 
@@ -223,6 +224,7 @@ class DeviceFingerprint
             '13,8' => 'Pro 12.9" (6th)', '13,9' => 'Pro 11" (4th)',
             '13,10' => 'Air (5th)', '13,11' => 'Air (5th)',
         ];
+
         return $models[$model] ?? $model;
     }
 
@@ -236,19 +238,19 @@ class DeviceFingerprint
         if ($fp1 === $fp2) {
             return 1.0;
         }
-        
+
         $bits1 = str_split(base_convert($fp1, 16, 2));
         $bits2 = str_split(base_convert($fp2, 16, 2));
-        
+
         $matches = 0;
         $total = min(count($bits1), count($bits2));
-        
+
         for ($i = 0; $i < $total; $i++) {
             if ($bits1[$i] === $bits2[$i]) {
                 $matches++;
             }
         }
-        
+
         return $total > 0 ? $matches / $total : 0.0;
     }
 }

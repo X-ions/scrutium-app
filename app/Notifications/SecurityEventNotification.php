@@ -8,8 +8,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+
 class SecurityEventNotification extends Notification implements ShouldQueue
 {
     use Queueable;
@@ -146,10 +147,10 @@ class SecurityEventNotification extends Notification implements ShouldQueue
 
         return match ($this->event->event_type) {
             'new_device' => "We are emailing you because a device we do not recognise signed in to {$first}'s account. If this was you, confirm the device and we will stop emailing you about it.",
-            'impossible_travel' => "These sign-ins are too far apart for the time between them, which can mean the account is being used from two places at once.",
-            'high_risk_location' => "This sign-in came from a region that has a higher rate of account abuse. If you were not travelling, review your account now.",
+            'impossible_travel' => 'These sign-ins are too far apart for the time between them, which can mean the account is being used from two places at once.',
+            'high_risk_location' => 'This sign-in came from a region that has a higher rate of account abuse. If you were not travelling, review your account now.',
             'login_failed' => "A sign-in attempt for {$first} used an incorrect password. Repeated attempts can indicate someone is guessing your credentials.",
-            'account_locked' => "We locked the account after detecting activity that put it at risk. Follow the steps below to restore access safely.",
+            'account_locked' => 'We locked the account after detecting activity that put it at risk. Follow the steps below to restore access safely.',
             'suspicious_activity' => "We flagged activity on {$first}'s account that does not match normal usage.",
             default => "This change was applied to {$first}'s account. We let you know so unexpected changes are easy to catch.",
         };

@@ -62,6 +62,114 @@ jobs:
       - name: Run tests
         run: php artisan test
 
+      # The suite above runs on SQLite because it is fast. Migrations that use
+      # ->change(), generated columns or engine-specific DDL are only really
+      # exercised on the production driver, so the migrations are also applied
+      # to a real PostgreSQL and MySQL here.
+      - name: SocialHub diagnostics
+        run: php artisan socialhub:doctor --json
+        continue-on-error: true
+
+  migrations:
+    name: Migrations on ${{ matrix.database }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [pgsql, mysql]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: socialhub
+          POSTGRES_USER: socialhub
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U socialhub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: socialhub
+          MYSQL_ROOT_PASSWORD: secret
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_CONNECTION: ${{ matrix.database }}
+      DB_HOST: ${{ matrix.database == 'pgsql' && '127.0.0.1' || '127.0.0.1' }}
+      DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || '3306' }}
+      DB_DATABASE: socialhub
+      DB_USERNAME: ${{ matrix.database == 'pgsql' && 'socialhub' || 'root' }}
+      DB_PASSWORD: ${{ matrix.database == 'pgsql' && 'secret' || 'secret' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, intl, mbstring, pdo_pgsql, pdo_mysql
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Generate application key
+        run: php artisan key:generate --force
+
+      - name: Apply every migration from empty
+        run: php artisan migrate:fresh --force
+
+      - name: Migrations are reversible
+        run: php artisan migrate:rollback --step=1000 --force
+
+      - name: Re-apply after rollback
+        run: php artisan migrate --force
+
+  docker:
+    name: Production image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build the application image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: socialhub:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build the proxy image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.nginx
+          push: false
+          load: true
+          tags: socialhub-nginx:ci
+
+      - name: The image is self-consistent
+        run: |
+          docker run --rm --entrypoint php socialhub:ci -r '
+            $manifest = "public/build/manifest.json";
+            if (! file_exists($manifest)) { fwrite(STDERR, "missing asset manifest\n"); exit(1); }
+            if (! class_exists("App\\Services\\Social\\SocialProviderRegistry")) { fwrite(STDERR, "autoloader is broken\n"); exit(1); }
+            echo "image ok\n";
+          '
+
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest

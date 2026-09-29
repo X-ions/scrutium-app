@@ -1,0 +1,430 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use App\Models\MediaAsset;
+use App\Models\PostVariant;
+use App\Models\SocialAccount;
+use App\Services\Social\Capabilities\PlatformCapabilities;
+use App\Services\Social\Contracts\ProviderCapabilities;
+use App\Services\Social\Contracts\SocialProviderInterface;
+use App\Services\Social\Data\AccountProfile;
+use App\Services\Social\Data\AnalyticsBatch;
+use App\Services\Social\Data\AnalyticsQuery;
+use App\Services\Social\Data\AuthRequest;
+use App\Services\Social\Data\AuthSession;
+use App\Services\Social\Data\FollowerStats;
+use App\Services\Social\Data\ProviderComment;
+use App\Services\Social\Data\ProviderPost;
+use App\Services\Social\Data\TokenSet;
+use App\Services\Social\Data\VerifiedWebhookRequest;
+use App\Services\Social\OAuth\UsesOAuth2AuthorizationCode;
+use App\Services\Social\ProviderHttpClient;
+use App\Services\Social\Providers\Concerns\MapsProviderErrors;
+use App\Services\Social\Providers\Concerns\PaginatesCursor;
+use App\Services\Social\Providers\Concerns\RespectsRateLimitHeaders;
+use App\Services\Social\Support\AccountTokenResolver;
+use App\Services\Social\Data\UserFacingError;
+use Illuminate\Http\Client\Response;
+use Throwable;
+
+/**
+ * {{ providerName }} provider.
+ *
+ * Implement against the provider's real API. If the platform cannot do
+ * something, throw {@see \App\Exceptions\Social\UnsupportedCapabilityException} —
+ * never return a fabricated response. Extend the capability matrix in
+ * {@see PlatformCapabilities} for this platform first.
+ */
+class {{ class }} implements SocialProviderInterface
+{
+    use MapsProviderErrors;
+    use PaginatesCursor;
+    use RespectsRateLimitHeaders;
+    use UsesOAuth2AuthorizationCode;
+
+    public const KEY = '{{ key }}';
+
+    public function __construct(
+        private readonly ProviderHttpClient $http,
+        private readonly AccountTokenResolver $tokens = new AccountTokenResolver,
+    ) {}
+
+    public function providerKey(): string
+    {
+        return self::KEY;
+    }
+
+    public function platformName(): string
+    {
+        return '{{ providerName }}';
+    }
+
+    /**
+     * Build the capability block for this platform. Set a flag to true only
+     * when the official API documents it, and list the normalised metric
+     * vocabulary the platform actually reports.
+     */
+    public function getSupportedFeatures(): ProviderCapabilities
+    {
+        return new ProviderCapabilities(
+            publishing: false,
+            imagePublishing: false,
+            videoPublishing: false,
+            carouselPublishing: false,
+            textPublishing: false,
+            stories: false,
+            reels: false,
+            shorts: false,
+            scheduling: false,
+            comments: false,
+            commentReplies: false,
+            likes: false,
+            shares: false,
+            views: false,
+            reach: false,
+            impressions: false,
+            saves: false,
+            followers: false,
+            analytics: false,
+            webhooks: false,
+            linkPosts: false,
+            firstComment: false,
+            deletePost: false,
+            metrics: [],
+            constraints: [
+                // 'scheduling:This platform has no native scheduling. Schedule on our side instead.',
+            ],
+            requiredScopes: [],
+        );
+    }
+
+    public function authenticate(AuthRequest $request): AuthSession
+    {
+        if ($request->code === null) {
+            return $this->beginSession(
+                $request->withState($request->state ?? $this->newState()),
+                $this->oauthAuthorizeUrl($request),
+            );
+        }
+
+        return new AuthSession(
+            provider: self::KEY,
+            authorizationUrl: '',
+            state: $request->state ?? '',
+            tokens: $this->tokenSetFrom($this->exchangeAuthorizationCode($request, $this->http->withoutThrottle())),
+        );
+    }
+
+    public function refreshToken(SocialAccount $account): TokenSet
+    {
+        $refreshToken = $this->tokens->resolve($account, self::KEY)->refreshToken;
+
+        if ($refreshToken === null || $refreshToken === '') {
+            return $this->tokens->resolve($account, self::KEY);
+        }
+
+        return $this->refreshAccessToken($refreshToken, $this->http->withoutThrottle());
+    }
+
+    public function getAccount(SocialAccount $account): AccountProfile
+    {
+        $response = $this->api($account)->get('me');
+
+        $this->assertSuccessful($response, 'getAccount');
+
+        $data = (array) $response->json();
+
+        return new AccountProfile(
+            provider: self::KEY,
+            providerAccountId: (string) ($data['id'] ?? ''),
+            username: $data['username'] ?? $data['handle'] ?? null,
+            displayName: $data['name'] ?? $data['display_name'] ?? null,
+            avatarUrl: $data['avatar'] ?? $data['profile_image_url'] ?? null,
+            raw: $data,
+        );
+    }
+
+    /**
+     * @return list<AccountProfile>
+     */
+    public function getPages(SocialAccount $account): array
+    {
+        $pages = [];
+
+        $body = $this->paginate(
+            fn (?string $after): Response => $this->api($account)->get('me/channels', array_filter([
+                'after' => $after,
+            ], static fn (mixed $value): bool => $value !== null)),
+            fn (array $body): ?string => $this->cursorFrom($body),
+        );
+
+        foreach ($this->collectItems($body, fn (array $page): array => $this->itemsFrom($page)) as $item) {
+            $pages[] = new AccountProfile(
+                provider: self::KEY,
+                providerAccountId: (string) ($item['id'] ?? ''),
+                displayName: $item['name'] ?? $item['title'] ?? null,
+                avatarUrl: $item['thumbnail'] ?? null,
+                raw: $item,
+            );
+        }
+
+        return $pages;
+    }
+
+    public function createPost(SocialAccount $account, array $payload): ProviderPost
+    {
+        $this->getSupportedFeatures()->assertSupports('publishing', self::KEY, $this->platformName());
+
+        $response = $this->api($account)->post('posts', $payload);
+
+        $this->assertSuccessful($response, 'createPost');
+
+        $data = (array) $response->json();
+
+        return new ProviderPost(
+            provider: self::KEY,
+            providerPostId: (string) ($data['id'] ?? ''),
+            text: isset($payload['text']) ? (string) $payload['text'] : null,
+            raw: $data,
+        );
+    }
+
+    public function publishPost(SocialAccount $account, PostVariant $variant): ProviderPost
+    {
+        return $this->createPost($account, [
+            'text' => (string) ($variant->caption ?? ''),
+        ]);
+    }
+
+    public function uploadMedia(SocialAccount $account, MediaAsset $media): string
+    {
+        $response = $this->api($account)->post('uploads', [
+            'file_name' => (string) ($media->filename ?? ''),
+            'size' => (int) ($media->file_size ?? 0),
+        ]);
+
+        $this->assertSuccessful($response, 'uploadMedia');
+
+        return (string) ((array) $response->json())['id'];
+    }
+
+    public function deletePost(SocialAccount $account, string $providerPostId): bool
+    {
+        $this->getSupportedFeatures()->assertSupports('deletePost', self::KEY, $this->platformName());
+
+        $response = $this->api($account)->delete($providerPostId);
+
+        $this->assertSuccessful($response, 'deletePost');
+
+        return $response->successful();
+    }
+
+    public function getPost(SocialAccount $account, string $providerPostId): ProviderPost
+    {
+        $response = $this->api($account)->get($providerPostId);
+
+        $this->assertSuccessful($response, 'getPost');
+
+        $data = (array) $response->json();
+
+        return new ProviderPost(
+            provider: self::KEY,
+            providerPostId: (string) ($data['id'] ?? $providerPostId),
+            text: $data['text'] ?? null,
+            permalink: $data['permalink'] ?? $data['url'] ?? null,
+            raw: $data,
+        );
+    }
+
+    /**
+     * @return list<ProviderComment>
+     */
+    public function getComments(SocialAccount $account, ?string $providerPostId = null): array
+    {
+        $this->getSupportedFeatures()->assertSupports('comments', self::KEY, $this->platformName());
+
+        $target = $providerPostId ?? 'me';
+
+        $body = $this->paginate(
+            fn (?string $after): Response => $this->api($account)->get($target.'/comments', array_filter([
+                'after' => $after,
+            ], static fn (mixed $value): bool => $value !== null)),
+            fn (array $body): ?string => $this->cursorFrom($body),
+        );
+
+        $comments = [];
+
+        foreach ($this->collectItems($body, fn (array $page): array => $this->itemsFrom($page)) as $item) {
+            $comments[] = new ProviderComment(
+                provider: self::KEY,
+                providerCommentId: (string) ($item['id'] ?? ''),
+                providerPostId: (string) $target,
+                content: (string) ($item['text'] ?? ''),
+                authorUsername: $item['author'] ?? null,
+                likeCount: (int) ($item['like_count'] ?? 0),
+                raw: $item,
+            );
+        }
+
+        return $comments;
+    }
+
+    public function replyToComment(SocialAccount $account, ProviderComment $comment, string $body): void
+    {
+        $this->getSupportedFeatures()->assertSupports('commentReplies', self::KEY, $this->platformName());
+
+        $response = $this->api($account)->post($comment->providerCommentId.'/replies', ['text' => $body]);
+
+        $this->assertSuccessful($response, 'replyToComment');
+    }
+
+    public function getAnalytics(SocialAccount $account, AnalyticsQuery $query): AnalyticsBatch
+    {
+        $this->getSupportedFeatures()->assertSupports('analytics', self::KEY, $this->platformName());
+
+        $response = $this->api($account)->get('insights', [
+            'since' => $query->from->format('Y-m-d'),
+            'until' => $query->to->format('Y-m-d'),
+        ]);
+
+        $this->assertSuccessful($response, 'getAnalytics');
+
+        // Map only the metrics the platform actually reports; a metric it does
+        // not report stays absent rather than being zero-filled.
+        return new AnalyticsBatch(
+            provider: self::KEY,
+            periodStart: $query->from,
+            periodEnd: $query->to,
+            granularity: $query->granularity,
+            raw: (array) $response->json(),
+        );
+    }
+
+    public function getFollowers(SocialAccount $account): FollowerStats
+    {
+        $this->getSupportedFeatures()->assertSupports('followers', self::KEY, $this->platformName());
+
+        $response = $this->api($account)->get('me/followers/count');
+
+        $this->assertSuccessful($response, 'getFollowers');
+
+        $data = (array) $response->json();
+
+        return new FollowerStats(
+            provider: self::KEY,
+            providerAccountId: (string) ($this->attribute($account, 'provider_account_id') ?? ''),
+            total: (int) ($data['count'] ?? $data['followers'] ?? 0),
+            raw: $data,
+        );
+    }
+
+    public function disconnect(SocialAccount $account): void
+    {
+        try {
+            $this->api($account)->delete('me/connection');
+        } catch (Throwable $e) {
+            // A provider-side cleanup failure must not block the local disconnect.
+        }
+    }
+
+    public function verifyWebhook(VerifiedWebhookRequest $request): bool
+    {
+        $secret = (string) (config('socialhub.providers.{{ key }}.oauth.webhook_secret') ?? '');
+
+        if ($secret === '') {
+            throw new \App\Exceptions\Social\ProviderNotConfiguredException(
+                self::KEY,
+                'no webhook secret is configured for {{ key }}',
+            );
+        }
+
+        $signature = $request->header('X-Signature');
+
+        if ($signature === null || $signature === '') {
+            throw new \App\Exceptions\Social\WebhookSignatureException(
+                self::KEY,
+                \App\Exceptions\Social\WebhookSignatureException::REASON_MISSING_SIGNATURE,
+            );
+        }
+
+        $expected = 'sha256='.hash_hmac('sha256', $request->rawBody, $secret);
+
+        if (! hash_equals($expected, $signature)) {
+            throw new \App\Exceptions\Social\WebhookSignatureException(self::KEY);
+        }
+
+        return true;
+    }
+
+    public function normalizeWebhook(array $payload): array
+    {
+        return [
+            'provider' => self::KEY,
+            'event_type' => (string) ($payload['type'] ?? 'unknown'),
+            'event_id' => (string) ($payload['id'] ?? ''),
+            'changes' => (array) ($payload['changes'] ?? []),
+        ];
+    }
+
+    /**
+     * Map this platform's error codes to user-facing messages. Anything
+     * unmapped falls back to a status-derived message in the trait.
+     *
+     * @return array<string, UserFacingError>
+     */
+    protected function errorMap(): array
+    {
+        return [
+            // 'invalid_token' => UserFacingError::make(
+            //     'token_invalid',
+            //     'This account needs to be reconnected.',
+            //     '{{ providerName }} rejected the stored token.',
+            //     false,
+            //     'Reconnect the account from the Social Accounts page.',
+            // ),
+        ];
+    }
+
+    /**
+     * @throws \App\Exceptions\Social\ProviderApiException
+     */
+    protected function throwPaginationFailure(Response $response): \App\Exceptions\Social\ProviderApiException
+    {
+        return $this->apiException($response);
+    }
+
+    /**
+     * Outbound client bound to the account's credentials.
+     */
+    protected function api(SocialAccount $account): ProviderHttpClient
+    {
+        return $this->http
+            ->withAccessToken($this->tokens->resolve($account, self::KEY)->accessToken)
+            ->withTenant($this->attribute($account, 'tenant_id'));
+    }
+
+    protected function assertSuccessful(Response $response, string $operation): void
+    {
+        $this->assertNotRateLimited($response);
+
+        if (! $response->successful()) {
+            $this->logFailure($operation, $response);
+
+            throw $this->apiException($response);
+        }
+    }
+
+    protected function attribute(object $model, string $key): mixed
+    {
+        try {
+            return method_exists($model, 'getAttribute')
+                ? $model->getAttribute($key)
+                : ($model->{$key} ?? null);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+}

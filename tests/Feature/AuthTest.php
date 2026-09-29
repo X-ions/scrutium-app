@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
@@ -117,7 +118,7 @@ it('does not expose diagnostic routes', function () {
     $this->post('/debug/forgot-password')->assertNotFound();
 });
 
-it('registers a workspace and authenticates its owner', function () {
+it('registers a workspace and holds the owner out until the address is verified', function () {
     $response = $this->post('/register', [
         'name' => 'Workspace Owner',
         'email' => 'owner@example.test',
@@ -127,12 +128,25 @@ it('registers a workspace and authenticates its owner', function () {
         'workspace_slug' => 'example-collective',
     ]);
 
-    $response->assertRedirect(route('dashboard'));
-    $this->assertAuthenticated();
+    // Registration creates the workspace and sends the verification email. The
+    // owner is deliberately not signed in yet: an unverified address must not
+    // be able to reach a workspace.
+    $response->assertRedirect(route('verification.notice'));
+    $this->assertGuest();
 
     $user = User::where('email', 'owner@example.test')->firstOrFail();
     expect($user->tenant->slug)->toBe('example-collective')
-        ->and($user->canManageWorkspace())->toBeTrue();
+        ->and($user->canManageWorkspace())->toBeTrue()
+        ->and($user->hasVerifiedEmail())->toBeFalse();
+
+    // Verifying the address through the signed link is what grants access.
+    $this->actingAs($user)->get(URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addHour(),
+        ['id' => $user->getKey(), 'hash' => sha1($user->getEmailForVerification())],
+    ))->assertRedirect();
+
+    $this->assertTrue($user->fresh()->hasVerifiedEmail());
 });
 
 it('sends a welcome email with account details after workspace signup', function () {
@@ -196,9 +210,11 @@ it('shows the workspace owner summary in the sidebar', function () {
     $this->actingAs($owner)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('SI')
+        // The sidebar identifies the workspace by name and the signed-in user
+        // by name. A job title is shown on the profile page, not here, so it
+        // is not asserted on.
         ->assertSee('Scrutium Inc')
-        ->assertSee('Workspace owner');
+        ->assertSee('Alicia Stone');
 });
 
 it('shows the workspace team dropdown and member list in the sidebar', function () {

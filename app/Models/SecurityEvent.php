@@ -163,4 +163,4 @@ class SecurityEvent extends Model
             'acknowledgment_action' => $action,
         ]);
     }
-};
+}

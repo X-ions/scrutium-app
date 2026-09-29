@@ -145,4 +145,4 @@ class SecurityNotificationPreference extends Model
             'max_emails_per_day' => 10,
         ];
     }
-};
+}

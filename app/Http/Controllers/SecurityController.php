@@ -112,6 +112,7 @@ class SecurityController extends Controller
             ->route('security.index')
             ->with('success', 'Device confirmed. We will not email you about this device again.');
     }
+
     public function trustDevice(Request $request, Device $device): RedirectResponse
     {
         abort_unless($device->user_id === $request->user()->id, 404);

@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Device extends Model
 {
@@ -150,7 +150,7 @@ class Device extends Model
             'trusted_by' => null,
             'trust_method' => null,
         ]);
-        
+
         $this->trustedDevice?->update([
             'revoked_at' => now(),
             'revoked_by' => $userId,
@@ -167,12 +167,12 @@ class Device extends Model
             $parts[] = ucfirst($this->device_type);
         }
         if ($this->browser) {
-            $parts[] = $this->browser . ($this->browser_version ? " {$this->browser_version}" : '');
+            $parts[] = $this->browser.($this->browser_version ? " {$this->browser_version}" : '');
         }
         if ($this->os) {
-            $parts[] = $this->os . ($this->os_version ? " {$this->os_version}" : '');
+            $parts[] = $this->os.($this->os_version ? " {$this->os_version}" : '');
         }
-        
+
         return $parts ? implode(' • ', $parts) : 'Unknown Device';
     }
 
@@ -187,6 +187,7 @@ class Device extends Model
         if ($this->browser) {
             return $this->browser;
         }
+
         return 'Unknown Device';
     }
-};
+}

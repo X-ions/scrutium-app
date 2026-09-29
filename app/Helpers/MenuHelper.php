@@ -72,9 +72,54 @@ class MenuHelper
         ];
     }
 
+    public static function getSocialHubItems()
+    {
+        return [
+            [
+                'icon' => 'dashboard',
+                'name' => 'Dashboard',
+                'path' => '/socialhub',
+            ],
+            [
+                'icon' => 'pages',
+                'name' => 'Composer',
+                'path' => '/socialhub/posts/create',
+            ],
+            [
+                'icon' => 'calendar',
+                'name' => 'Calendar',
+                'path' => '/socialhub/calendar',
+            ],
+            [
+                'icon' => 'tables',
+                'name' => 'Media library',
+                'path' => '/socialhub/media',
+            ],
+            [
+                'icon' => 'chat',
+                'name' => 'Comments',
+                'path' => '/socialhub/comments',
+            ],
+            [
+                'icon' => 'charts',
+                'name' => 'Analytics',
+                'path' => '/socialhub/analytics',
+            ],
+            [
+                'icon' => 'user-profile',
+                'name' => 'Social accounts',
+                'path' => '/socialhub/accounts',
+            ],
+        ];
+    }
+
     public static function getMenuGroups()
     {
         return [
+            [
+                'title' => 'SocialHub',
+                'items' => self::getSocialHubItems(),
+            ],
             [
                 'title' => 'Workspace',
                 'items' => self::getMainNavItems(),

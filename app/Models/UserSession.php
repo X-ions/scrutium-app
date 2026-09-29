@@ -74,7 +74,7 @@ class UserSession extends Model
         return $query->where('is_revoked', false)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
+                    ->orWhere('expires_at', '>', now());
             });
     }
 
@@ -95,7 +95,7 @@ class UserSession extends Model
 
     public function isActive(): bool
     {
-        return !$this->is_revoked 
+        return ! $this->is_revoked
             && ($this->expires_at?->isFuture() ?? true);
     }
 
@@ -152,7 +152,7 @@ class UserSession extends Model
         } elseif ($this->location_country) {
             $parts[] = $this->location_country;
         }
-        
+
         return $parts ? implode(' • ', $parts) : 'Active Session';
     }
-};
+}

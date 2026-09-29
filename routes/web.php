@@ -127,3 +127,6 @@ Route::middleware(['auth', 'tenant'])->group(function (): void {
 });
 
 Route::view('/error-404', 'pages.errors.error-404', ['title' => 'Error 404'])->name('error-404');
+
+require __DIR__.'/webhooks.php';
+require __DIR__.'/socialhub.php';
