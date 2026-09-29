@@ -243,15 +243,15 @@
 }
 
 @utility menu-item {
-  @apply relative flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-theme-sm font-medium transition-all duration-200 ease-out;
+  @apply relative flex w-full items-center gap-2 rounded-[8px] px-2.5 py-[5px] text-[13px] font-medium leading-4 transition-all duration-200 ease-out;
 }
 
 @utility menu-item-active {
-  @apply rounded-[10px] bg-green-500 text-black shadow-sm ring-0 dark:bg-green-500 dark:text-black;
+  @apply rounded-[8px] bg-green-500 text-black shadow-sm ring-0 dark:bg-green-500 dark:text-black;
 }
 
 @utility menu-item-inactive {
-  @apply rounded-[10px] text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200;
+  @apply rounded-[8px] text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200;
 }
 
 @utility menu-item-icon {
