@@ -1,9 +1,19 @@
 @php
     use App\Helpers\MenuHelper;
+    use Illuminate\Support\Facades\Storage;
+    use Illuminate\Support\Str;
+
     $workspace = $workspace ?? auth()->user()?->tenant;
     $teamMembers = $workspace?->users()->orderBy('name')->get() ?? collect();
     $menuGroups = MenuHelper::getMenuGroups();
     $currentPath = request()->path();
+    $workspaceLogoUrl = $workspace?->logo_path
+        ? Storage::disk(config('filesystems.evidence_disk'))->url($workspace->logo_path)
+        : null;
+    $workspaceInitials = $workspace
+        ? collect(preg_split('/\s+/', trim($workspace->name)))->filter()->take(2)->map(fn ($word) => mb_substr($word, 0, 1))->implode('')
+        : '';
+    $workspacePlanLabel = Str::headline($workspace?->plan ?: 'free');
 @endphp
 
 <aside id="sidebar"
@@ -65,33 +75,6 @@
         </button>
     </div>
 
-    <div class="mb-4 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 via-white to-brand-25/40 p-3 shadow-sm dark:border-gray-800 dark:from-white/[0.02] dark:via-gray-900 dark:to-brand-500/5"
-        :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'flex justify-center' : ''">
-        <div class="flex items-center gap-2" :class="(!$store.sidebar.isExpanded && !$store.sidebar.isHovered && !$store.sidebar.isMobileOpen) ? 'justify-center' : 'justify-start'">
-            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 shadow-sm ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20">gbf</span>
-            <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="min-w-0">
-                <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">✦ DISCOVER</p>
-            </div>
-        </div>
-
-        <div x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen" class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
-            <a href="{{ route('campaign-tools') }}" @class([
-                'flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium transition-colors',
-                'bg-brand-50 text-brand-700 ring-1 ring-brand-100 dark:bg-brand-500/15 dark:text-brand-300 dark:ring-brand-400/20' => request()->routeIs('campaign-tools'),
-                'text-gray-700 hover:bg-white hover:text-brand-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-brand-300' => ! request()->routeIs('campaign-tools'),
-            ]) @if(request()->routeIs('campaign-tools')) aria-current="page" @endif>
-                <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
-                <span>Campaign tools</span>
-            </a>
-            <a href="{{ route('partnerintegrations') }}" class="block font-medium text-gray-800 transition-colors hover:text-brand-600 dark:text-white/90 dark:hover:text-brand-300">{{ __('Partner integrations') }}</a>
-            <p class="font-medium text-gray-800 dark:text-white/90">Featured services</p>
-            <button type="button" class="inline-flex items-center gap-1 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200">
-                Explore
-                <span aria-hidden="true">→</span>
-            </button>
-        </div>
-    </div>
-
     <div class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar flex-1">
         <nav class="mb-4">
             <div class="flex flex-col gap-2">
@@ -139,21 +122,31 @@
             x-data="{ workspaceMenuOpen: false }"
             @click.outside="workspaceMenuOpen = false"
             @keydown.escape.window="workspaceMenuOpen = false">
-            <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                    <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400">Workspace</p>
-                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex min-w-0 flex-1 items-center gap-2.5">
+                    <span class="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-blue-light-100 text-xs font-semibold text-blue-light-800 ring-1 ring-blue-light-200 dark:bg-blue-light-500/15 dark:text-blue-light-200 dark:ring-blue-light-400/25">
+                        @if ($workspaceLogoUrl)
+                            <img src="{{ $workspaceLogoUrl }}" alt="{{ $workspace->name }}" class="h-full w-full object-cover" />
+                        @else
+                            {{ mb_strtoupper($workspaceInitials) }}
+                        @endif
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-gray-400">Workspace</p>
+                        <p class="truncate text-sm font-medium text-gray-800 dark:text-white/90">{{ $workspace->name }}</p>
+                        <span class="mt-1 inline-flex rounded-full bg-blue-light-50 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-blue-light-700 dark:bg-blue-light-500/15 dark:text-blue-light-200">{{ $workspacePlanLabel }}</span>
+                    </div>
                 </div>
                 <button type="button"
                     class="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
-                    aria-label="Open workspace team menu"
+                    aria-label="Open workspace menu"
                     aria-haspopup="true"
                     :aria-expanded="workspaceMenuOpen.toString()"
                     @click="workspaceMenuOpen = !workspaceMenuOpen">
-                    <svg class="h-[18px] w-[18px] text-blue-light-600 dark:text-blue-light-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M11.98 2.1c1.05 5.8 2.12 6.87 7.92 7.92-5.8 1.05-6.87 2.12-7.92 7.92-1.05-5.8-2.12-6.87-7.92-7.92 5.8-1.05 6.87-2.12 7.92-7.92Z" />
-                        <path d="M19.1 15.1c.43 2.36.87 2.8 3.23 3.23-2.36.43-2.8.87-3.23 3.23-.43-2.36-.87-2.8-3.23-3.23 2.36-.43 2.8-.87 3.23-3.23Z" />
-                        <path d="M5 2.5c.3 1.64.61 1.95 2.25 2.25C5.61 5.05 5.3 5.36 5 7 4.7 5.36 4.39 5.05 2.75 4.75 4.39 4.45 4.7 4.14 5 2.5Z" />
+                    <svg class="h-[18px] w-[18px] text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <circle cx="5" cy="12" r="1.75" />
+                        <circle cx="12" cy="12" r="1.75" />
+                        <circle cx="19" cy="12" r="1.75" />
                     </svg>
                 </button>
                 @if (auth()->user()?->canManageWorkspace())
@@ -170,8 +163,8 @@
                 @endif
             </div>
 
-            <div x-cloak x-show="workspaceMenuOpen" x-transition.origin.top.right
-                class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+            <div x-cloak x-show="workspaceMenuOpen" x-transition.origin.bottom.right
+                class="absolute start-0 end-0 bottom-full z-50 mb-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
                 role="menu">
                 @if (auth()->user()?->canManageWorkspace())
                     <div class="space-y-1 border-b border-gray-100 p-2 dark:border-gray-800">
@@ -181,20 +174,37 @@
                             class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5">Invite</a>
                     </div>
                 @endif
-                <div class="max-h-56 overflow-y-auto p-2">
-                    <p class="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Team members</p>
-                    @forelse ($teamMembers as $member)
-                        <div class="flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
-                            <span class="truncate text-gray-700 dark:text-gray-200">{{ $member->name }}</span>
-                            @if ($member->is(auth()->user()))
-                                <span class="shrink-0 text-xs text-gray-400">You</span>
-                            @else
-                                <span class="shrink-0 text-xs text-gray-400">{{ $member->role()->label() }}</span>
-                            @endif
-                        </div>
-                    @empty
-                        <p class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No team members yet.</p>
-                    @endforelse
+                <div class="max-h-64 overflow-y-auto p-2">
+                    <a href="{{ route('campaign-tools') }}" role="menuitem" @class([
+                        'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300' => request()->routeIs('campaign-tools'),
+                        'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-white/5' => ! request()->routeIs('campaign-tools'),
+                    ]) @if(request()->routeIs('campaign-tools')) aria-current="page" @endif>
+                        <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 11.8 8l5.7 2-5.7 2L10 17.5 8.2 12 2.5 10l5.7-2L10 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m15.5 2 .7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7.7-2.3Z" fill="currentColor"/></svg>
+                        <span>Campaign tools</span>
+                    </a>
+                    <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-800">
+                        <p class="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Featured services</p>
+                        <button type="button" role="menuitem" class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-brand-600 transition-colors hover:bg-gray-50 hover:text-brand-700 dark:text-brand-300 dark:hover:bg-white/5 dark:hover:text-brand-200">
+                            <span>Explore</span>
+                            <span aria-hidden="true">→</span>
+                        </button>
+                    </div>
+                    <div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-800">
+                        <p class="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Team members</p>
+                        @forelse ($teamMembers as $member)
+                            <div class="flex min-w-0 items-center justify-between gap-2 rounded-md px-3 py-2 text-sm">
+                                <span class="truncate text-gray-700 dark:text-gray-200">{{ $member->name }}</span>
+                                @if ($member->is(auth()->user()))
+                                    <span class="shrink-0 text-xs text-gray-400">You</span>
+                                @else
+                                    <span class="shrink-0 text-xs text-gray-400">{{ $member->role()->label() }}</span>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No team members yet.</p>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
