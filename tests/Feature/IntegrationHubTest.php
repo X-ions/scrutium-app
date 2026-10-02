@@ -37,6 +37,14 @@ it('links the discover integrations item to the partner integrations route', fun
         ->assertSee(route('partnerintegrations'));
 });
 
+it('redirects the integration OAuth flow to the provider authorization endpoint', function () {
+    $owner = User::factory()->owner()->create();
+
+    $this->actingAs($owner)
+        ->get(route('integrations.oauth', 'instagram'))
+        ->assertRedirect(route('socialhub.accounts.connect', 'instagram'));
+});
+
 it('stores credentials encrypted and connects a workspace integration', function () {
     $owner = User::factory()->owner()->create();
 

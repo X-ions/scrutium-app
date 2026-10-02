@@ -12,6 +12,7 @@
     connectionScope: 'workspace',
     connectionCampaignId: '',
     hasSavedToken: false,
+    isReconnectMode: false,
     openConnection(provider, name, scope, campaignId, hasToken) {
         this.selectedProvider = provider;
         this.selectedName = name;
@@ -19,8 +20,8 @@
         this.connectionScope = scope || 'workspace';
         this.connectionCampaignId = campaignId || '';
         this.hasSavedToken = hasToken;
+        this.isReconnectMode = !hasToken;
         this.connectionOpen = true;
-        this.$nextTick(() => this.$refs.accessToken.focus());
     },
     closeConnection() {
         this.connectionOpen = false;
@@ -69,8 +70,8 @@
                     </div>
                     @if ($provider['status'] === 'Connected')
                         <span class="shrink-0 rounded-full bg-success-50 px-2 py-1 text-xs font-medium text-success-700 dark:bg-success-500/15 dark:text-success-300">{{ __('Connected') }}</span>
-                    @elseif ($provider['status'] === 'Authentication Needed')
-                        <span class="shrink-0 rounded-full bg-warning-50 px-2 py-1 text-xs font-medium text-warning-700 dark:bg-warning-500/15 dark:text-warning-300">{{ __('Authentication Needed') }}</span>
+                    @elseif ($provider['status'] === 'Reconnect required')
+                        <span class="shrink-0 rounded-full bg-warning-50 px-2 py-1 text-xs font-medium text-warning-700 dark:bg-warning-500/15 dark:text-warning-300">{{ __('Reconnect required') }}</span>
                     @else
                         <span class="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">{{ __('Available') }}</span>
                     @endif
@@ -85,12 +86,19 @@
                             <p>{{ $connection->scope === 'campaign' && $connection->campaign ? $connection->campaign->name : __('Workspace-wide') }}</p>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
-                            <button type="button" @click="openConnection(@js($provider['provider']), @js($provider['name']), @js($connection->scope), @js($connection->campaign_id), @js(! empty($connection->credentials['access_token'] ?? null)))"
-                                class="rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-white/5">{{ __('Configure') }}</button>
-                            <form method="POST" action="{{ route('integrations.disconnect', $connection) }}" x-show="@js($provider['status'] === 'Connected')">
-                                @csrf
-                                <button class="rounded-md px-2 py-2 text-xs font-medium text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5">{{ __('Disconnect') }}</button>
-                            </form>
+                            @if ($connection->needsReconnect())
+                                <button type="button" @click="openConnection(@js($provider['provider']), @js($provider['name']), @js($connection->scope), @js($connection->campaign_id), @js(! empty($connection->credentials['access_token'] ?? null)))"
+                                    class="rounded-md bg-warning-600 px-3 py-2 text-xs font-semibold text-white hover:bg-warning-700 dark:bg-warning-500 dark:hover:bg-warning-400">{{ __('Reconnect') }}</button>
+                            @else
+                                <button type="button" @click="openConnection(@js($provider['provider']), @js($provider['name']), @js($connection->scope), @js($connection->campaign_id), @js(! empty($connection->credentials['access_token'] ?? null)))"
+                                    class="rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-white/5">{{ __('Configure') }}</button>
+                            @endif
+                            @if ($provider['status'] === 'Connected')
+                                <form method="POST" action="{{ route('integrations.disconnect', $connection) }}">
+                                    @csrf
+                                    <button class="rounded-md px-2 py-2 text-xs font-medium text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5">{{ __('Disconnect') }}</button>
+                                </form>
+                            @endif
                         </div>
                     </div>
                 @else
@@ -107,7 +115,7 @@
         <section x-show="connectionOpen" x-transition.scale.origin.top class="w-full max-w-md rounded-lg border border-gray-200 bg-white shadow-theme-xl dark:border-gray-700 dark:bg-gray-900" role="dialog" aria-modal="true" aria-labelledby="connect-title">
             <header class="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-blue-light-700 dark:text-blue-light-300">{{ __('Connection setup') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-blue-light-700 dark:text-blue-light-300">{{ __('Connect account') }}</p>
                     <h2 id="connect-title" class="mt-1 text-lg font-semibold text-gray-900 dark:text-white" x-text="selectedName"></h2>
                 </div>
                 <button type="button" @click="closeConnection()" class="grid size-8 place-items-center rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10" aria-label="{{ __('Close connection setup') }}">
@@ -115,49 +123,23 @@
                 </button>
             </header>
 
-            <form method="POST" action="{{ route('integrations.store') }}" class="space-y-4 px-5 py-4">
-                @csrf
-                <input type="hidden" name="provider" x-model="selectedProvider">
-                <label class="block">
-                    <span class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Connection name') }}</span>
-                    <input name="name" x-model="connectionName" required maxlength="120" class="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
-                </label>
-                <label class="block">
-                    <span class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Access token') }}</span>
-                    <input x-ref="accessToken" name="access_token" type="password" autocomplete="new-password" :required="!hasSavedToken" maxlength="4096" :placeholder="hasSavedToken ? @js(__('Leave blank to keep saved credentials')) : @js(__('Enter provider access token'))" class="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
-                    <span class="mt-1.5 block text-xs text-gray-500 dark:text-gray-400">{{ __('Credentials are encrypted at rest. Provider OAuth and live sync require provider-specific credentials and API setup.') }}</span>
-                </label>
-                <fieldset>
-                    <legend class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Apply this integration to') }}</legend>
-                    <div class="grid grid-cols-2 gap-2">
-                        <label class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-3 py-2.5 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
-                            <input type="radio" name="scope" value="workspace" x-model="connectionScope" class="text-brand-600">
-                            {{ __('Whole workspace') }}
-                        </label>
-                        <label class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-3 py-2.5 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-200">
-                            <input type="radio" name="scope" value="campaign" x-model="connectionScope" class="text-brand-600">
-                            {{ __('Specific campaign') }}
-                        </label>
-                    </div>
-                </fieldset>
-                <label x-show="connectionScope === 'campaign'" x-cloak class="block">
-                    <span class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200">{{ __('Active campaign') }}</span>
-                    <select name="campaign_id" :required="connectionScope === 'campaign'" x-model="connectionCampaignId" :disabled="connectionScope !== 'campaign'" class="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-950 dark:text-white">
-                        <option value="">{{ __('Select a campaign') }}</option>
-                        @foreach ($campaigns as $campaign)
-                            <option value="{{ $campaign->id }}">{{ $campaign->name }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                    <input type="checkbox" name="auto_verify" value="1" class="rounded border-gray-300 text-brand-600">
-                    {{ __('Enable automatic creator verification') }}
-                </label>
-                <footer class="flex justify-end gap-2 border-t border-gray-200 pt-3 dark:border-gray-800">
+            <div class="space-y-4 px-5 py-4">
+                <div class="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/70 dark:text-gray-300">
+                    {{ __('You will be redirected to the provider to approve access. We never ask for raw API keys in this flow.') }}
+                </div>
+
+                <div class="flex justify-end gap-2 border-t border-gray-200 pt-3 dark:border-gray-800">
                     <button type="button" @click="closeConnection()" class="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-200">{{ __('Cancel') }}</button>
-                    <button class="rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400">{{ __('Save & connect') }}</button>
-                </footer>
-            </form>
+                    <a
+                        x-bind:href="selectedProvider ? '/integrations/' + selectedProvider + '/oauth' : '#'
+                        "
+                        class="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-400"
+                        x-text="isReconnectMode ? 'Reconnect with provider' : 'Connect with provider'"
+                    >
+                        {{ __('Connect with provider') }}
+                    </a>
+                </div>
+            </div>
         </section>
     </div>
 </div>

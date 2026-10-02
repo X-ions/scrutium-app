@@ -56,6 +56,13 @@ class Integration extends Model
         return $this->statusEnum()->isHealthy();
     }
 
+    public function needsReconnect(): bool
+    {
+        return ! $this->isHealthy()
+            || blank($this->credentials['access_token'] ?? null)
+            || filled($this->last_error);
+    }
+
     public function markConnected(): self
     {
         $this->status = IntegrationStatus::Connected;

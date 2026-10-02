@@ -111,6 +111,7 @@ Route::middleware(['auth', 'tenant'])->group(function (): void {
         Route::get('/alerts/subscriptions', [AlertController::class, 'subscriptions'])->name('alerts.subscriptions');
         Route::patch('/alerts/subscriptions/{subscription}', [AlertController::class, 'updateSubscription'])->name('alerts.subscriptions.update');
         Route::get('/integrations', [IntegrationController::class, 'index'])->name('integrations');
+        Route::get('/integrations/{provider}/oauth', [IntegrationController::class, 'oauth'])->name('integrations.oauth');
         Route::get('/partnerintegrations', [IntegrationController::class, 'index'])->name('partnerintegrations');
         Route::post('/integrations', [IntegrationController::class, 'store'])->name('integrations.store');
         Route::post('/integrations/{integration}/connect', [IntegrationController::class, 'connect'])->name('integrations.connect');

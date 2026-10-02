@@ -23,7 +23,7 @@ class IntegrationController extends Controller
                 'integration' => $integration,
                 'status' => ! $integration
                     ? 'Available'
-                    : ($integration->isHealthy() ? 'Connected' : 'Authentication Needed'),
+                    : ($integration->needsReconnect() ? 'Reconnect required' : 'Connected'),
             ];
         });
 
@@ -34,6 +34,23 @@ class IntegrationController extends Controller
             'connectedCount' => $connections->filter(fn (Integration $integration): bool => $integration->isHealthy())->count(),
             'campaigns' => Campaign::where('status', CampaignStatus::Active->value)->orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    public function oauth(string $provider): RedirectResponse
+    {
+        $supportedProviders = ['facebook', 'instagram', 'youtube', 'tiktok', 'x', 'linkedin', 'pinterest'];
+
+        if (! in_array($provider, $supportedProviders, true)) {
+            return redirect()->route('partnerintegrations')->with('error', 'This provider does not support secure OAuth authorization yet.');
+        }
+
+        $providerConfig = config('socialhub.providers.'.$provider.'.oauth', []);
+
+        if (blank($providerConfig['client_id'] ?? null) || blank($providerConfig['client_secret'] ?? null)) {
+            return redirect()->route('partnerintegrations')->with('error', 'This provider is not configured in the app environment yet.');
+        }
+
+        return redirect()->route('socialhub.accounts.connect', $provider);
     }
 
     public function store(Request $request): RedirectResponse

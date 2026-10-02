@@ -8,6 +8,7 @@ use App\Enums\SocialAccountStatus;
 use App\Enums\SocialPlatform;
 use App\Http\Controllers\Controller;
 use App\Jobs\Engagement\SyncAccountCommentsJob;
+use App\Models\Integration;
 use App\Models\SocialAccount;
 use App\Services\Engagement\TokenRefreshService;
 use App\Services\Social\Data\AuthRequest;
@@ -102,6 +103,7 @@ final class SocialAccountController extends Controller
         try {
             $session = $this->oauth->handleCallback($authRequest);
             $account = $this->connections->persist($session, (int) $request->user()->tenant_id, (int) $request->user()->id);
+            $this->syncWorkspaceIntegration($account, $session, $request->user()->tenant_id);
         } catch (Throwable $exception) {
             Log::warning('socialhub.oauth.callback_failed', [
                 'provider' => $provider,
@@ -109,13 +111,13 @@ final class SocialAccountController extends Controller
             ]);
 
             return redirect()
-                ->route('socialhub.accounts.index')
+                ->route('partnerintegrations')
                 ->with('error', $this->messageFor($exception));
         }
 
         return redirect()
-            ->route('socialhub.accounts.index')
-            ->with('status', sprintf('%s is connected.', $account->provider?->label() ?? $platform->label()));
+            ->route('partnerintegrations')
+            ->with('success', sprintf('%s is connected and ready to sync.', $account->provider?->label() ?? $platform->label()));
     }
 
     public function refresh(Request $request, SocialAccount $account): RedirectResponse
@@ -192,6 +194,46 @@ final class SocialAccountController extends Controller
         return redirect()
             ->route('socialhub.accounts.index')
             ->with('status', 'Account disconnected and its stored credentials deleted.');
+    }
+
+    /**
+     * Keep the legacy workspace integration model in sync with the OAuth-based
+     * connected account record so the integrations dashboard reflects the real
+     * connection status immediately after the provider callback.
+     */
+    private function syncWorkspaceIntegration(SocialAccount $account, object $session, int $tenantId): void
+    {
+        $provider = $account->provider?->value ?? $session->provider ?? null;
+
+        if ($provider === null) {
+            return;
+        }
+
+        $integration = Integration::query()->firstOrNew([
+            'tenant_id' => $tenantId,
+            'provider' => $provider,
+        ]);
+
+        $credentials = $integration->credentials ?? [];
+        $tokens = $session->tokens ?? null;
+
+        if ($tokens !== null) {
+            $credentials['access_token'] = $tokens->accessToken;
+            if ($tokens->refreshToken !== null && $tokens->refreshToken !== '') {
+                $credentials['refresh_token'] = $tokens->refreshToken;
+            }
+        }
+
+        $integration->fill([
+            'name' => $account->provider_display_name ?: config('integrations.providers.'.$provider.'.name', ucfirst($provider)),
+            'scope' => 'workspace',
+            'credentials' => $credentials,
+            'auto_verify' => false,
+            'last_error' => null,
+        ]);
+
+        $integration->save();
+        $integration->markConnected();
     }
 
     /**
